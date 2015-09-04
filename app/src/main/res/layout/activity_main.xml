@@ -1,0 +1,46 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin" tools:context=".MainActivity">
+
+
+    <Button
+        android:layout_width="wrap_content"
+        android:id="@+id/bRecord"
+        android:layout_height="wrap_content" 
+        android:text="Start Data Collection"/>
+    
+    <TextView
+        android:layout_below="@id/bRecord"
+        android:layout_width="wrap_content"
+        tools:text="hey"
+        android:id="@+id/tvAccel"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:layout_below="@id/tvAccel"
+        android:layout_width="wrap_content"
+        tools:text="hey"
+        android:id="@+id/tvAccel2"
+        android:layout_height="wrap_content" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tvAccel2"
+        android:id="@+id/tvLocation"/>
+
+  <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_below="@id/tvLocation"
+      android:id="@+id/lvChart"
+      android:orientation="horizontal"
+      android:layout_height="match_parent">
+
+  </LinearLayout>
+    <!--<ListView-->
+        <!--android:layout_width=""-->
+        <!--android:layout_height=""></ListView>-->
+
+</RelativeLayout>
