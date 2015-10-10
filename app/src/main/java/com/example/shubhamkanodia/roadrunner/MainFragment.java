@@ -1,10 +1,14 @@
 package com.example.shubhamkanodia.roadrunner;
 
 import android.Manifest;
-import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.Path;
+import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -14,13 +18,23 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.SystemClock;
+import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.Chronometer;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.parse.ParseFile;
+import com.parse.ParseObject;
 
 import org.achartengine.ChartFactory;
 import org.achartengine.GraphicalView;
@@ -28,17 +42,28 @@ import org.achartengine.model.XYMultipleSeriesDataset;
 import org.achartengine.model.XYSeries;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
+import org.xmlpull.v1.XmlPullParserException;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Date;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import io.realm.Realm;
 
 // In this case, the fragment displays simple text based on the page
-public class MainFragment extends Fragment  implements SensorEventListener{
+public class MainFragment extends Fragment implements SensorEventListener {
 
-    private int mPage;
-    private SensorManager senSensorManager;
-    private Sensor senAccelerometer;
 
     private TextView tvAccel;
     private TextView tvAccel2;
     private TextView tvLocation;
+    private Chronometer chronometer;
+    private Button bRecord;
 
     private LinearLayout lvChart;
     private XYSeries Xseries;
@@ -47,11 +72,12 @@ public class MainFragment extends Fragment  implements SensorEventListener{
 
     private GraphicalView chartView;
     private XYMultipleSeriesRenderer mRenderer;
-
-
+    private SensorManager senSensorManager;
+    private Sensor senAccelerometer;
     private long lastUpdate = 0;
-    private float last_x, last_y, last_z;
 
+
+    private boolean isRecodring = false;
 
     public static MainFragment newInstance() {
         Bundle args = new Bundle();
@@ -70,97 +96,162 @@ public class MainFragment extends Fragment  implements SensorEventListener{
         View view = inflater.inflate(R.layout.fragment_main, container, false);
 
         tvAccel = (TextView) view.findViewById(R.id.tvAccel);
-        tvAccel2 = (TextView)  view.findViewById(R.id.tvAccel2);
-        tvLocation = (TextView)  view.findViewById(R.id.tvLocation);
+        tvAccel2 = (TextView) view.findViewById(R.id.tvAccel2);
+        tvLocation = (TextView) view.findViewById(R.id.tvLocation);
+        bRecord = (Button) view.findViewById(R.id.bRecord);
+        chronometer = (Chronometer) view.findViewById(R.id.chronometer);
 
-        lvChart = (LinearLayout)  view.findViewById(R.id.lvChart);
-
-
-        LocationManager mlocManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(getActivity(),Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    public void requestPermissions(@NonNull String[] permissions, int requestCode)
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for Activity#requestPermissions for more details.
-//            return;
-        }
-
-        mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-
-                tvLocation.setText("Latitude: " + location.getLatitude() + " Longitude: " + location.getLongitude());
-
-            }
-
-            @Override
-            public void onStatusChanged(String s, int i, Bundle bundle) {
-
-            }
-
-            @Override
-            public void onProviderEnabled(String s) {
-
-            }
-
-            @Override
-            public void onProviderDisabled(String s) {
-
-            }
-        });
-
-        senSensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
-        senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+        lvChart = (LinearLayout) view.findViewById(R.id.lvChart);
 
         Xseries = new XYSeries("X Axis");
         Yseries = new XYSeries("Y Axis");
         Zseries = new XYSeries("Z Axis");
 
 
-
         XYMultipleSeriesDataset multipleSeriesDataset = new XYMultipleSeriesDataset();
-        multipleSeriesDataset.addSeries(0,Xseries);
+        multipleSeriesDataset.addSeries(0, Xseries);
         multipleSeriesDataset.addSeries(1, Yseries);
         multipleSeriesDataset.addSeries(2, Zseries);
 
 
-
         XYSeriesRenderer Xrenderer = new XYSeriesRenderer();
-        Xrenderer.setLineWidth(1);
-        Xrenderer.setColor(Color.RED);
+        Xrenderer.setLineWidth(2);
+        Xrenderer.setColor(Color.parseColor("#AA4862EB"));
+        XYSeriesRenderer.FillOutsideLine xfill = new XYSeriesRenderer.FillOutsideLine(XYSeriesRenderer.FillOutsideLine.Type.BOUNDS_ABOVE);
+        xfill.setColor(Color.parseColor("#334862EB"));
+        Xrenderer.addFillOutsideLine(xfill);
 
         XYSeriesRenderer Yrenderer = new XYSeriesRenderer();
-        Yrenderer.setLineWidth(1);
-        Yrenderer.setColor(Color.BLUE);
+        Yrenderer.setLineWidth(2);
+        Yrenderer.setColor(Color.parseColor("#AA48EB60"));
+        XYSeriesRenderer.FillOutsideLine yfill = new XYSeriesRenderer.FillOutsideLine(XYSeriesRenderer.FillOutsideLine.Type.BOUNDS_ABOVE);
+        yfill.setColor(Color.parseColor("#3348EB60"));
+        Yrenderer.addFillOutsideLine(yfill);
 
 
         XYSeriesRenderer Zrenderer = new XYSeriesRenderer();
-        Zrenderer.setLineWidth(1);
-        Zrenderer.setColor(Color.GREEN);
+        Zrenderer.setLineWidth(2);
+        Zrenderer.setColor(Color.parseColor("#AA48E3EB"));
+        XYSeriesRenderer.FillOutsideLine zfill = new XYSeriesRenderer.FillOutsideLine(XYSeriesRenderer.FillOutsideLine.Type.BOUNDS_ABOVE);
+        zfill.setColor(Color.parseColor("#3348E3EB"));
+        Zrenderer.addFillOutsideLine(zfill);
+
 
         mRenderer = new XYMultipleSeriesRenderer();
-        mRenderer.addSeriesRenderer(0,Xrenderer);
-        mRenderer.addSeriesRenderer(1,Yrenderer);
+        mRenderer.addSeriesRenderer(0, Xrenderer);
+        mRenderer.addSeriesRenderer(1, Yrenderer);
         mRenderer.addSeriesRenderer(2, Zrenderer);
 
 
-
         mRenderer.setMarginsColor(Color.argb(0x00, 0xff, 0x00, 0x00)); // transparent margins
-// Disable Pan on two axis
         mRenderer.setPanEnabled(false, false);
-        mRenderer.setYAxisMax(12);
-        mRenderer.setYAxisMin(-12);
-        mRenderer.setZoomEnabled(true, false);
-        mRenderer.setShowGrid(true); // we show the grid
+        mRenderer.setYAxisMax(15);
+        mRenderer.setYAxisMin(0);
+        mRenderer.setShowLegend(false);
+        int margins[] = {0, 0, 0, 0};
+        mRenderer.setMargins(margins);
+        mRenderer.setShowAxes(false);
+        mRenderer.setShowLabels(false);
+        mRenderer.setZoomEnabled(false, false);
+        mRenderer.setShowGrid(false); // we show the grid
 
-        chartView = ChartFactory.getLineChartView(getActivity(), multipleSeriesDataset, mRenderer);
+        chartView = ChartFactory.getCubeLineChartView(getActivity(), multipleSeriesDataset, mRenderer, 0.4f);
         lvChart.addView(chartView);
 
+
+
+            bRecord.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+
+                    if (!isRecodring) {
+
+                        LocationManager lm = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+                        boolean gps_enabled = false;
+
+                        try {
+                            gps_enabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+                        } catch (Exception ex) {
+                        }
+
+
+                        if (!gps_enabled) {
+                            // notify user
+                            final AlertDialog.Builder dialog = new AlertDialog.Builder(getActivity());
+                            dialog.setMessage("We need your GPS data to be recorded too!");
+                            dialog.setIcon(R.drawable.ic_location);
+                            dialog.setTitle("Please enable Location");
+                            dialog.setPositiveButton("Turn On GPS", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface paramDialogInterface, int paramInt) {
+
+                                    Intent myIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                                    getActivity().startActivity(myIntent);
+                                    //get gps
+                                }
+                            });
+                            dialog.setNegativeButton("Not Now", new DialogInterface.OnClickListener() {
+
+                                @Override
+                                public void onClick(DialogInterface paramDialogInterface, int paramInt) {
+
+                                }
+                            });
+                            dialog.show();
+                        } else {
+                            startRecorderService();
+
+                        }
+                        //gps on
+
+
+                    }// if not recording
+                    else {
+                        endRecorderService();
+
+                    }
+                }
+
+            });
+
+        senSensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
+        senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+
         return view;
+    }
+//    @Override
+//    public void onPause(){
+//        super.onPause();
+//
+//        senSensorManager.unregisterListener(this);
+//    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        senSensorManager.unregisterListener(this);
+
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        senSensorManager.unregisterListener(this);
+
+    }
+
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+
+        if (isMyServiceRunning(DataLoggerService.class))
+            startRecorderService();
+        else
+            endRecorderService();
+
     }
 
     @Override
@@ -179,27 +270,58 @@ public class MainFragment extends Fragment  implements SensorEventListener{
                 long diffTime = (curTime - lastUpdate);
                 lastUpdate = curTime;
 
-                tvAccel.setText("X: " + x + "Y: " + y + "Z: " + z);
-
-                float speed = Math.abs(x + y + z - last_x - last_y - last_z) / diffTime * 10000;
-
-                tvAccel2.setText("Speed: " + speed);
-                Xseries.add(System.currentTimeMillis(), x);
-                Yseries.add(System.currentTimeMillis(), y);
-                Zseries.add(System.currentTimeMillis(), z);
-
-                mRenderer.setXAxisMin(System.currentTimeMillis() -5000);
+                Xseries.add(System.currentTimeMillis(), Math.abs(x));
+                Yseries.add(System.currentTimeMillis(), Math.abs(y));
+                Zseries.add(System.currentTimeMillis(), Math.abs(z));
+                mRenderer.setXAxisMin(System.currentTimeMillis() - 350);
                 chartView.repaint();
 
-                last_x = x;
-                last_y = y;
-                last_z = z;
 
             }
-
-
         }
+    }
 
+    public void startRecorderService() {
+
+        bRecord.setBackgroundColor(Color.RED);
+        bRecord.setText("Recording data...");
+        bRecord.setTextColor(Color.RED);
+        bRecord.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_record, 0, 0, 0);
+        chronometer.setBase(SystemClock.elapsedRealtime());
+        chronometer.start();
+
+
+        Intent intent = new Intent(getActivity().getApplicationContext(), DataLoggerService.class);
+
+        if (!isMyServiceRunning(DataLoggerService.class))
+            getActivity().startService(intent);
+        isRecodring = true;
+
+    }
+
+    public void endRecorderService() {
+
+        isRecodring = false;
+
+        bRecord.setBackgroundColor(Color.parseColor("#1c2b38"));
+        bRecord.setTextColor(0x88ffffff);
+        bRecord.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_record_inactive, 0, 0, 0);
+        chronometer.stop();
+
+        bRecord.setText("Start Data Collection");
+        Intent intent = new Intent(getActivity().getApplicationContext(), DataLoggerService.class);
+        getActivity().stopService(intent);
+
+    }
+
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getActivity().getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

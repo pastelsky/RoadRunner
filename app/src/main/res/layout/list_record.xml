@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    >
+<data>
+    <variable name="record" type="com.example.shubhamkanodia.roadrunner.RecordingItem" />
+    <import type="android.view.View"/>
+</data>
+
+
+<RelativeLayout
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:padding="16dp"
+    android:background="?android:attr/selectableItemBackground"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/tvTime"
+        android:textColor="#003739"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        tools:text="12 hours ago..."
+        android:text="@{record.start_time}"/>
+
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/tvDistance"
+        android:text='@{record.distance + "km"}'
+        tools:text="12km"
+        android:layout_below="@id/tvTime"/>
+
+    <ProgressBar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:layout_below="@id/tvDistance"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:visibility='@{record.isSyncing ? View.VISIBLE : View.GONE}'
+        android:id="@+id/pbUploadProgress"/>
+
+    <ImageView
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:adjustViewBounds="true"
+        android:id="@+id/ivSyncIcon"
+        android:layout_alignParentRight="true"
+        android:visibility='@{record.isSyncing ? View.GONE : View.VISIBLE}'
+        android:src='@{record.isSynced ?  @drawable/ic_done: @drawable/ic_sync}'
+        />
+
+</RelativeLayout>
+</layout>

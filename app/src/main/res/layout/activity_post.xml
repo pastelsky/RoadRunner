@@ -1,0 +1,270 @@
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:soulwolf="http://schemas.android.com/apk/res-auto"
+    tools:context="com.example.shubhamkanodia.roadrunner.PostActivity">
+
+
+    <TextView
+        android:id="@+id/tvHeadS"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Stats"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="#aaa"
+        android:fontFamily="sans-serif-condensed"
+        android:textAllCaps="true"
+        android:padding="8dp"
+        android:layout_marginLeft="8dp"
+
+        />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/llStat"
+        android:padding="16dp"
+        android:layout_below="@id/tvHeadS"
+        android:background="#fcfcfc"
+        android:orientation="horizontal">
+
+<RelativeLayout
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+ >
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="67"
+        android:id="@+id/tvMinutes"
+        android:textStyle="bold"
+        android:layout_centerHorizontal="true"
+        android:textColor="#444"
+        android:fontFamily="sans-serif-condensed"
+        android:textSize="50dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="minutes"
+        android:layout_below="@id/tvMinutes"
+        android:id="@+id/tvMinutesLabel"
+        android:layout_centerHorizontal="true"
+        android:textColor="#333"
+        android:layout_marginTop="-10dp"
+        android:fontFamily="sans-serif-condensed"
+        android:textSize="30dp"/>
+</RelativeLayout>
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="75dp"
+            android:background="#dedede"
+            android:layout_gravity="center_vertical"
+            />
+
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="23"
+                android:id="@+id/tvDist"
+                android:textStyle="bold"
+                android:layout_centerHorizontal="true"
+                android:textColor="#444"
+                android:fontFamily="sans-serif-condensed"
+                android:textSize="50dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="kilometers"
+                android:layout_below="@id/tvDist"
+                android:id="@+id/tvDistLabel"
+                android:layout_centerHorizontal="true"
+                android:textColor="#333"
+                android:layout_marginTop="-10dp"
+                android:fontFamily="sans-serif-condensed"
+                android:textSize="30dp"/>
+        </RelativeLayout>
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Crop your data"
+        android:id="@+id/tvHeadR"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-condensed"
+        android:textAllCaps="true"
+        android:padding="8dp"
+        android:textColor="#aaa"
+        android:layout_marginLeft="8dp"
+        android:layout_below="@id/llStat"
+        />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_below="@id/tvHeadR"
+        android:id="@+id/llRange"
+        android:background="#fcfcfc"
+        android:clipChildren="false"
+        android:layout_height="wrap_content">
+
+    <com.appyvet.rangebar.RangeBar
+        xmlns:custom="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/rangebar"
+        android:layout_width="match_parent"
+        android:layout_marginTop="-25dp"
+        android:clipChildren="false"
+        android:layout_height="72dp"
+        custom:tickStart="5"
+        custom:tickInterval="1"
+        custom:rangeBar="false"
+        custom:connectingLineColor="#009688"
+        custom:tickEnd="10"
+        custom:tickColor="#00000000"
+        custom:selectorColor="#009688"
+        custom:pinColor="#009688"
+        custom:connectingLineWeight="1dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"/>
+    </LinearLayout>
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="How did you travel?"
+        android:id="@+id/tvHeadT"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-condensed"
+        android:textAllCaps="true"
+        android:padding="8dp"
+        android:textColor="#aaa"
+
+        android:layout_marginLeft="8dp"
+        android:layout_below="@id/llRange"
+        />
+
+    <net.soulwolf.widget.materialradio.MaterialRadioGroup
+        android:layout_width="match_parent"
+        android:id="@+id/rgTransport"
+        android:gravity="center"
+        android:layout_height="100dp"
+        android:padding="14dp"
+        android:background="#fcfcfc"
+        android:layout_below="@id/tvHeadT"
+        android:orientation="horizontal">
+
+        <net.soulwolf.widget.materialradio.MaterialRadioButton
+            android:layout_width="0dp"
+            android:id="@+id/car"
+            android:layout_weight="0.9"
+            android:layout_height="match_parent"
+            soulwolf:mcTextSize="6sp"
+            soulwolf:mcText="Car"
+            android:layout_marginLeft="15dp"
+            android:layout_marginRight="15dp"
+            soulwolf:mcPadding="5dp"
+            soulwolf:mcChecked="true"
+            soulwolf:mcAnimator="true"
+            soulwolf:mcTextColor="@drawable/radio_press"
+            soulwolf:mcButton="@drawable/car_states"/>
+
+
+
+        <net.soulwolf.widget.materialradio.MaterialRadioButton
+            android:id="@+id/bus"
+            android:layout_width="0dp"
+            android:layout_weight="0.9"
+            android:layout_height="match_parent"
+            soulwolf:mcTextSize="6sp"
+            android:layout_marginLeft="15dp"
+            android:layout_marginRight="15dp"
+            soulwolf:mcText="Bus"
+            soulwolf:mcPadding="5dp"
+            soulwolf:mcChecked="true"
+            soulwolf:mcAnimator="true"
+            soulwolf:mcTextColor="@drawable/radio_press"
+            soulwolf:mcButton="@drawable/bus_states"/>
+
+        <net.soulwolf.widget.materialradio.MaterialRadioButton
+            android:id="@+id/bike"
+            android:layout_width="0dp"
+            android:layout_weight="1.1"
+            android:layout_height="match_parent"
+            soulwolf:mcAnimator="true"
+            soulwolf:mcTextSize="6sp"
+            android:layout_marginLeft="15dp"
+            android:layout_marginRight="15dp"
+            soulwolf:mcPadding="5dp"
+            soulwolf:mcText="Bike"
+            soulwolf:mcTextColor="@drawable/radio_press"
+            soulwolf:mcButton="@drawable/bike_states"/>
+
+
+        <net.soulwolf.widget.materialradio.MaterialRadioButton
+            android:id="@+id/cycle"
+            android:layout_width="0dp"
+            android:layout_weight="1.1"
+            android:layout_height="match_parent"
+            soulwolf:mcAnimator="true"
+            soulwolf:mcTextSize="6sp"
+            android:layout_marginLeft="15dp"
+            android:layout_marginRight="15dp"
+            soulwolf:mcPadding="5dp"
+            soulwolf:mcText="Cycle"
+            soulwolf:mcTextColor="@drawable/radio_press"
+            soulwolf:mcButton="@drawable/cycle_states"/>
+
+
+    </net.soulwolf.widget.materialradio.MaterialRadioGroup>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#EEE"
+        />
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal">
+
+    <Button
+        android:id="@+id/bDiscard"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:padding="22dp"
+        android:background="#1c2b38"
+        android:textColor="#fff"
+        android:text="Discard"
+        />
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:padding="22dp"
+            android:background="#1c2b38"
+            android:textColor="#fff"
+            android:text="Upload Data"
+            android:id="@+id/bSave"
+            />
+    </LinearLayout>
+
+</RelativeLayout>

@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.android.databinding'
 
 android {
     compileSdkVersion 23
@@ -10,6 +11,7 @@ android {
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
+            multiDexEnabled true
     }
     buildTypes {
         release {
@@ -17,7 +19,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
 }
+
+
 
 repositories {
     mavenCentral()
@@ -27,9 +32,16 @@ repositories {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:23.0.0'
-    compile 'com.android.support:design:23.0.0'
+    compile 'com.android.support:appcompat-v7:23.0.1'
+    compile 'com.android.support:design:23.0.1'
+    compile 'io.realm:realm-android:0.83.0'
+    compile 'com.parse.bolts:bolts-android:1.+'
+    compile 'com.nineoldandroids:library:2.4.0+'
+    compile 'net.soulwolf.widget:materialRadio:1.0.1'
+    compile 'com.appyvet:materialrangebar:1.+'
+    compile fileTree(dir: 'libs', include: 'Parse-*.jar')
     compile group: 'org.achartengine', name: 'achartengine', version: '1.2.0'
+    compile 'com.android.support:recyclerview-v7:23.0.1'
+
 }

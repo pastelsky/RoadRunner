@@ -4,13 +4,19 @@
     tools:context="com.example.shubhamkanodia.roadrunner.MainFragment">
 
     <Button
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:id="@+id/bRecord"
+        android:backgroundTint="#1c2b38"
+        android:textColor="#88ffffff"
         android:layout_height="wrap_content"
+        android:padding="22dp"
+        android:drawableLeft="@drawable/ic_record_inactive"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:background="#1c2b38"
         android:text="Start Data Collection"/>
 
     <TextView
-        android:layout_below="@id/bRecord"
         android:layout_width="wrap_content"
         tools:text="hey"
         android:id="@+id/tvAccel"
@@ -27,14 +33,31 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/tvAccel2"
         android:id="@+id/tvLocation"/>
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_below="@id/tvLocation"
         android:id="@+id/lvChart"
         android:orientation="horizontal"
-        android:layout_height="match_parent">
-        </LinearLayout>
+        android:layout_marginBottom="65dp"
+        android:layout_height="340dp">
+
+    </LinearLayout>
+
+
+    <Chronometer
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/chronometer"
+        android:textSize="100sp"
+        android:fontFamily="sans-serif-condensed"
+        android:layout_gravity="center_horizontal" />
+
+    </FrameLayout>
 
 
 </RelativeLayout>
