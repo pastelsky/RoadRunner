@@ -1,28 +1,19 @@
-package com.example.shubhamkanodia.roadrunner;
+package com.example.shubhamkanodia.roadrunner.Fragments;
 
-import android.Manifest;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.graphics.Path;
-import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,10 +22,9 @@ import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.parse.ParseFile;
-import com.parse.ParseObject;
+import com.example.shubhamkanodia.roadrunner.Services.DataLoggerService;
+import com.example.shubhamkanodia.roadrunner.R;
 
 import org.achartengine.ChartFactory;
 import org.achartengine.GraphicalView;
@@ -42,18 +32,6 @@ import org.achartengine.model.XYMultipleSeriesDataset;
 import org.achartengine.model.XYSeries;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
-import org.xmlpull.v1.XmlPullParserException;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Date;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
-import io.realm.Realm;
 
 // In this case, the fragment displays simple text based on the page
 public class MainFragment extends Fragment implements SensorEventListener {

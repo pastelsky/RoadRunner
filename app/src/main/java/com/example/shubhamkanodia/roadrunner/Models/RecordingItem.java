@@ -1,10 +1,8 @@
-package com.example.shubhamkanodia.roadrunner;
+package com.example.shubhamkanodia.roadrunner.Models;
 
 import android.text.format.DateUtils;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import com.example.shubhamkanodia.roadrunner.Helpers.Haversine;
 
 /**
  * Created by shubhamkanodia on 04/09/15.
@@ -21,6 +19,21 @@ public class RecordingItem {
 
     private double start_lat;
     private double start_long;
+
+    public RecordingItem(RecordRow recordRow){
+
+        this.start_time = recordRow.getStart_time();
+        this.end_time = recordRow.getEnd_time();
+        this.distance = Math.round(Haversine.haversine(start_lat, start_long, end_lat, end_long) * 100.0) / 100.0 ;
+        this.isSynced = recordRow.is_synced();
+        this.isSyncing = recordRow.is_syncing();
+        this.start_lat = recordRow.getStart_lat();
+        this.start_long = recordRow.getStart_long();
+        this.end_lat = recordRow.getEnd_lat();
+        this.end_long =recordRow.getEnd_long();
+        this.upload_progress = 0;
+
+    }
 
     public RecordingItem(long start_time, long end_time, boolean isSynced, boolean isSyncing, double start_lat, double start_long, double end_lat, double end_long, int upload_progress) {
         this.start_time = start_time;

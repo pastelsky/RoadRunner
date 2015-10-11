@@ -43,5 +43,6 @@ dependencies {
     compile fileTree(dir: 'libs', include: 'Parse-*.jar')
     compile group: 'org.achartengine', name: 'achartengine', version: '1.2.0'
     compile 'com.android.support:recyclerview-v7:23.0.1'
+    compile 'de.greenrobot:eventbus:2.4.0'
 
 }

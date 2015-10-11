@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     >
 <data>
-    <variable name="record" type="com.example.shubhamkanodia.roadrunner.RecordingItem" />
+    <variable name="record" type="com.example.shubhamkanodia.roadrunner.Models.RecordingItem" />
     <import type="android.view.View"/>
 </data>
 

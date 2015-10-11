@@ -1,8 +1,7 @@
-package com.example.shubhamkanodia.roadrunner;
+package com.example.shubhamkanodia.roadrunner.Services;
 
 import android.Manifest;
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
@@ -10,7 +9,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -19,25 +17,17 @@ import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.widget.Toast;
 
+import com.example.shubhamkanodia.roadrunner.Activities.PostActivity;
+import com.example.shubhamkanodia.roadrunner.R;
+import com.example.shubhamkanodia.roadrunner.Models.SensorRecoder;
 import com.parse.ParseException;
 import com.parse.ParseObject;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Date;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import io.realm.Realm;
 
@@ -146,8 +136,8 @@ public class DataLoggerService extends Service implements SensorEventListener {
 //    recording.put("end_time", new Date());
 //    recording.put("end_Lat", curLat);
 //    recording.put("end_Long", curLong);
-//    recording.put("isSyncing", false);
-//    recording.put("isSynced", false);
+//    recording.put("is_syncing", false);
+//    recording.put("is_synced", false);
 //    recording.put("uploadProgress", 0);
 
     @Override
@@ -192,8 +182,8 @@ public void onDestroy(){
         ParseObject record = new ParseObject("RecordingList");
         record.add("start_time", startTime);
         record.add("end_time", System.currentTimeMillis());
-        record.add("isSynced", false);
-        record.add("isSyncing", false);
+        record.add("is_synced", false);
+        record.add("is_syncing", false);
         record.add("start_lat", initLat);
         record.add("start_long", initLong);
         record.add("end_lat", curLat);

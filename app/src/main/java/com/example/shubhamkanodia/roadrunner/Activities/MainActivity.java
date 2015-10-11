@@ -1,41 +1,14 @@
-package com.example.shubhamkanodia.roadrunner;
+package com.example.shubhamkanodia.roadrunner.Activities;
 
-import android.Manifest;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.content.Context;
-import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
-import com.parse.Parse;
-
-import org.achartengine.ChartFactory;
-import org.achartengine.GraphicalView;
-import org.achartengine.chart.PointStyle;
-import org.achartengine.model.XYMultipleSeriesDataset;
-import org.achartengine.model.XYSeries;
-import org.achartengine.renderer.XYMultipleSeriesRenderer;
-import org.achartengine.renderer.XYSeriesRenderer;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.example.shubhamkanodia.roadrunner.R;
+import com.example.shubhamkanodia.roadrunner.SampleFragmentPagerAdapter;
 
 
 public class MainActivity extends AppCompatActivity {
