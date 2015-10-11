@@ -189,7 +189,7 @@ public void onDestroy(){
 }
 
     public void saveTrip(){
-        ParseObject record = new ParseObject("Recordings");
+        ParseObject record = new ParseObject("RecordingList");
         record.add("start_time", startTime);
         record.add("end_time", System.currentTimeMillis());
         record.add("isSynced", false);

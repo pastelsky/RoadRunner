@@ -77,7 +77,7 @@ public class RecordsFragment extends Fragment {
         recordingsAdapter = new RecordingsAdapter(getContext(), records);
         rvRecords.setAdapter(recordingsAdapter);
 
-        ParseQuery<ParseObject> query = ParseQuery.getQuery("RecordingsList");
+        ParseQuery<ParseObject> query = ParseQuery.getQuery("RecordingList");
         query.fromLocalDatastore();
 
         query.findInBackground(new FindCallback<ParseObject>() {
