@@ -8,7 +8,7 @@ import io.realm.annotations.PrimaryKey;
 /**
  * Created by shubhamkanodia on 04/09/15.
  */
-public class SensorRecoder extends RealmObject {
+public class SensorRecorder extends RealmObject {
 
     private long currentTime;
 

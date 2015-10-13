@@ -9,16 +9,37 @@ import com.example.shubhamkanodia.roadrunner.Helpers.Haversine;
  */
 public class RecordingItem {
 
-    private long start_time;
-    private  long end_time;
+    public long start_time;
+    public  long end_time;
 
-    private double distance;
-    private boolean isSynced;
-    private boolean isSyncing;
+    public double distance;
+    public boolean isSynced;
+    public boolean isSyncing;
 
 
-    private double start_lat;
-    private double start_long;
+    public double start_lat;
+    public double start_long;
+
+
+
+    public String from_address;
+    public String to_address;
+
+    public String getFrom_address() {
+        return from_address;
+    }
+
+    public void setFrom_address(String from_address) {
+        this.from_address = from_address;
+    }
+
+    public String getTo_address() {
+        return to_address;
+    }
+
+    public void setTo_address(String to_address) {
+        this.to_address = to_address;
+    }
 
     public RecordingItem(RecordRow recordRow){
 
@@ -32,10 +53,13 @@ public class RecordingItem {
         this.end_lat = recordRow.getEnd_lat();
         this.end_long =recordRow.getEnd_long();
         this.upload_progress = 0;
+        this.to_address = recordRow.getTo_address();
+        this.from_address = recordRow.getFrom_address();
+
 
     }
 
-    public RecordingItem(long start_time, long end_time, boolean isSynced, boolean isSyncing, double start_lat, double start_long, double end_lat, double end_long, int upload_progress) {
+    public RecordingItem(long start_time, long end_time, boolean isSynced, boolean isSyncing, double start_lat, double start_long, double end_lat, double end_long, int upload_progress, String to_address, String from_address) {
         this.start_time = start_time;
         this.end_time = end_time;
         this.distance = Math.round(Haversine.haversine(start_lat, start_long, end_lat, end_long) * 100.0) / 100.0 ;
@@ -46,6 +70,8 @@ public class RecordingItem {
         this.end_lat = end_lat;
         this.end_long = end_long;
         this.upload_progress = upload_progress;
+        this.to_address = to_address;
+        this.from_address = from_address;
     }
 
     private double end_lat;

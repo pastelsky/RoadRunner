@@ -1,5 +1,6 @@
 package com.example.shubhamkanodia.roadrunner.Activities;
 
+import android.content.Intent;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -7,33 +8,39 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.example.shubhamkanodia.roadrunner.AppCompatPreferenceActivity;
 import com.example.shubhamkanodia.roadrunner.R;
 import com.example.shubhamkanodia.roadrunner.SampleFragmentPagerAdapter;
+import com.example.shubhamkanodia.roadrunner.Services.UploadService;
 
 
 public class MainActivity extends AppCompatActivity {
+
+    int activeTab;
+    ViewPager viewPager;
+    SampleFragmentPagerAdapter sampleFragmentPagerAdapter;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-//
-//        Parse.enableLocalDatastore(this);
-//        Parse.initialize(this, "wQ0QGvJnHy1UdN3Q7qVmNgJnmIGavG1YTWGgw8RX", "5SbSrgLlvmjQ0zP1DbHVBHNvz0nmlKsSqU2sn41y");
 
 
-        ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
-        viewPager.setAdapter(new SampleFragmentPagerAdapter(getSupportFragmentManager(),
-                MainActivity.this));
+         viewPager = (ViewPager) findViewById(R.id.viewpager);
+        sampleFragmentPagerAdapter = new SampleFragmentPagerAdapter(getSupportFragmentManager(),
+                MainActivity.this);
+        viewPager.setAdapter(sampleFragmentPagerAdapter);
+
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
         tabLayout.setupWithViewPager(viewPager);
 
-
-
-
     }
+
+public void changeFragment(){
+   viewPager.setCurrentItem(1, true);
+}
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -50,7 +57,22 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
+//        if (id == R.id.action_sync_all) {
+//
+//            Intent serviceIntent = new Intent(getApplicationContext(), UploadService.class);
+//            serviceIntent.putExtra("upload_bulk", true);
+//            startService(serviceIntent);
+//
+//
+//
+//            return true;
+//        }
+
         if (id == R.id.action_settings) {
+
+            Intent serviceIntent = new Intent(getApplicationContext(), AppCompatPreferenceActivity.class);
+            startService(serviceIntent);
+
             return true;
         }
 

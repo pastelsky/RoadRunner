@@ -31,13 +31,29 @@
 
         <activity
             android:name=".Activities.PostActivity"
-            android:label="@string/title_activity_post" >
+            android:label="@string/title_activity_post"
+            android:screenOrientation="portrait" >
         </activity>
 
         <service
             android:name=".Services.UploadService"
             android:exported="false" >
         </service>
+
+        <receiver android:name=".Activities.RunnerWidget" >
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/runner_widget_info" />
+        </receiver>
+
+        <activity
+            android:name=".Activities.SettingsActivity"
+            android:label="@string/title_activity_settings" >
+        </activity>
     </application>
 
 </manifest>

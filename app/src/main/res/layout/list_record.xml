@@ -4,6 +4,8 @@
     >
 <data>
     <variable name="record" type="com.example.shubhamkanodia.roadrunner.Models.RecordingItem" />
+
+    <import type="com.example.shubhamkanodia.roadrunner.Helpers.Helper"/>
     <import type="android.view.View"/>
 </data>
 
@@ -12,27 +14,45 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:padding="16dp"
     android:background="?android:attr/selectableItemBackground"
+    android:foreground="?selectableItemBackground"
+    android:clickable="true"
     android:layout_height="match_parent">
+
+
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/tvTime"
         android:textColor="#003739"
         android:textStyle="bold"
         android:textSize="16sp"
-        tools:text="12 hours ago..."
-        android:text="@{record.start_time}"/>
-
+        android:id="@+id/tvAddress"
+        android:maxLines="2"
+        android:ellipsize="end"
+        tools:text="Basvangudi ❯ Koramangala"
+        android:paddingRight="26dp"
+        android:text='@{record.from_address + "  ❯  " +record.to_address}'/>
 
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/tvDistance"
-        android:text='@{record.distance + "km"}'
-        tools:text="12km"
-        android:layout_below="@id/tvTime"/>
+        android:text='@{record.distance + "km E2E • "}'
+        tools:text="12km E2E • "
+
+        android:layout_below="@id/tvAddress"/>
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/tvTime"
+        android:layout_below="@id/tvAddress"
+        tools:text="12 hours ago..."
+        android:layout_toRightOf="@id/tvDistance"
+        android:text="@{record.start_time}"/>
+
 
     <ProgressBar
         android:layout_width="match_parent"
@@ -43,15 +63,31 @@
         android:visibility='@{record.isSyncing ? View.VISIBLE : View.GONE}'
         android:id="@+id/pbUploadProgress"/>
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Uploading..."
+        android:visibility='@{record.isSyncing ? View.VISIBLE : View.GONE}'
+        android:layout_alignParentRight="true"/>
+
     <ImageView
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:adjustViewBounds="true"
+        android:layout_centerVertical="true"
         android:id="@+id/ivSyncIcon"
         android:layout_alignParentRight="true"
         android:visibility='@{record.isSyncing ? View.GONE : View.VISIBLE}'
         android:src='@{record.isSynced ?  @drawable/ic_done: @drawable/ic_sync}'
         />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#e7e7e7"
+        android:layout_below="@+id/pbUploadProgress"
+        android:layout_marginBottom="5dp"
+        android:layout_marginTop="5dp"/>
 
 </RelativeLayout>
 </layout>

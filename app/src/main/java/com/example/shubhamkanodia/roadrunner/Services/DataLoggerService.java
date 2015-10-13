@@ -4,8 +4,10 @@ import android.Manifest;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -21,14 +23,21 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
+import android.view.Gravity;
+import android.widget.Chronometer;
 import android.widget.Toast;
 
+import com.example.shubhamkanodia.roadrunner.Activities.MainActivity;
 import com.example.shubhamkanodia.roadrunner.Activities.PostActivity;
+import com.example.shubhamkanodia.roadrunner.Events.ServiceStopEvent;
+import com.example.shubhamkanodia.roadrunner.Events.UploadChangeEvent;
 import com.example.shubhamkanodia.roadrunner.R;
-import com.example.shubhamkanodia.roadrunner.Models.SensorRecoder;
+import com.example.shubhamkanodia.roadrunner.Models.SensorRecorder;
 import com.parse.ParseException;
 import com.parse.ParseObject;
 
+import de.greenrobot.event.EventBus;
 import io.realm.Realm;
 
 /**
@@ -50,20 +59,23 @@ public class DataLoggerService extends Service implements SensorEventListener {
     long lastUpdate = 0;
     private float last_x, last_y, last_z;
 
-    private static final int notif_id=1;
+    private static final int notif_id = 1;
     private Realm realm;
+    LocationManager mlocManager;
+    LocationListener locationListener;
 
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
 
-
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 01, intent, PendingIntent.FLAG_CANCEL_CURRENT);
         realm = Realm.getInstance(this);
         startTime = System.currentTimeMillis();
 
         Bitmap bm = Bitmap.createBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_run));
+
+        registerReceiver(stopServiceReceiver, new IntentFilter("myFilter"));
+        PendingIntent contentIntent = PendingIntent.getBroadcast(this, 0, new Intent("myFilter"), PendingIntent.FLAG_CANCEL_CURRENT);
 
         Notification notification = new NotificationCompat.Builder(this)
                 .setContentTitle("Recording data")
@@ -72,50 +84,63 @@ public class DataLoggerService extends Service implements SensorEventListener {
                 .setSubText(" Don't forget to finish recording when done.")
                 .setSmallIcon(R.drawable.ic_run_notif)
                 .setLargeIcon(bm)
-                .setContentIntent(pendingIntent)
+                .setContentIntent(contentIntent)
                 .setOngoing(true)
+                .setAutoCancel(true)
                 .setPriority(Notification.PRIORITY_HIGH)
                 .addAction(R.drawable.ic_stop,
-                        "Stop Recording", pendingIntent).build();
+                        "Stop Recording", contentIntent).build();
 
         startForeground(notif_id,
                 notification);
 
-        LocationManager mlocManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        mlocManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
         }
 
-        mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, new LocationListener() {
+        locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                if(initLat == 0 || initLong == 0){
-                    initLat =location.getLatitude();
+                if (initLat == 0 || initLong == 0) {
+                    initLat = location.getLatitude();
                     initLong = location.getLongitude();
                 }
 
                 curLat = location.getLatitude();
                 curLong = location.getLongitude();
 
+                Log.e("LOCATION:", curLat + " : " + curLong);
+
             }
 
             @Override
             public void onStatusChanged(String s, int i, Bundle bundle) {
+                Log.e("LOCATION:","Changed");
+
             }
 
             @Override
             public void onProviderEnabled(String s) {
+                Log.e("LOCATION:","Started");
+
             }
 
             @Override
             public void onProviderDisabled(String s) {
+                Log.e("LOCATION:","Stopped");
+
             }
-        });
+        };
+
+        mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+        mlocManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+
 
         mlocManager.addGpsStatusListener(new android.location.GpsStatus.Listener() {
             public void onGpsStatusChanged(int event) {
 
-                if(event == GpsStatus.GPS_EVENT_STOPPED){
+                if (event == GpsStatus.GPS_EVENT_STOPPED) {
                     stopSelf();
 
                 }
@@ -151,17 +176,43 @@ public class DataLoggerService extends Service implements SensorEventListener {
         // do nothing
     }
 
-@Override
-public void onDestroy(){
+    @Override
+    public void onDestroy() {
+
+        EventBus.getDefault().post(new ServiceStopEvent());
+
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+        }
+        mlocManager.removeUpdates(locationListener);
+
+        unregisterReceiver(stopServiceReceiver);
 
     long totTime = ( System.currentTimeMillis() - startTime ) / 1000;
-    if(totTime < MINIMUM_RECORD_TIME)
+    if(totTime < MINIMUM_RECORD_TIME ) {
         Toast.makeText(this, "Data set too small. Try recording for a longer time!", Toast.LENGTH_SHORT).show();
+        Intent m = new Intent(this, MainActivity.class);
+        m.setAction(Intent.ACTION_MAIN);
+        m.addCategory(Intent.CATEGORY_LAUNCHER);
+        m.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
+        startActivity(m);
+    }
+    else if(curLat ==0 || curLong ==0){
+        Toast.makeText(this, "Did not detect any geographical movement. Move it!", Toast.LENGTH_SHORT).show();
+        Intent m = new Intent(this, MainActivity.class);
+        m.setAction(Intent.ACTION_MAIN);
+        m.addCategory(Intent.CATEGORY_LAUNCHER);
+        m.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
+        startActivity(m);
+    }
 
     else {
-
-        saveTrip();
         Intent resultIntent = new Intent(this, PostActivity.class);
+
+        resultIntent.setAction(Intent.ACTION_MAIN);
+        resultIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        resultIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
 
         resultIntent.putExtra("start_time", startTime);
         resultIntent.putExtra("end_time", System.currentTimeMillis());
@@ -170,33 +221,20 @@ public void onDestroy(){
         resultIntent.putExtra("start_long", initLong);
         resultIntent.putExtra("end_long", curLong);
 
-        resultIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
         startActivity(resultIntent);
+
+        stopSelf();
     }
 
 
 }
 
-    public void saveTrip(){
-        ParseObject record = new ParseObject("RecordingList");
-        record.add("start_time", startTime);
-        record.add("end_time", System.currentTimeMillis());
-        record.add("is_synced", false);
-        record.add("is_syncing", false);
-        record.add("start_lat", initLat);
-        record.add("start_long", initLong);
-        record.add("end_lat", curLat);
-        record.add("end_long", curLong);
-        record.add("upload_progress", 0);
-        try {
-            record.pin();
-        } catch (ParseException e) {
-            e.printStackTrace();
+    protected BroadcastReceiver stopServiceReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            stopSelf();
         }
-
-        record.pinInBackground();
-    }
+    };
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
@@ -217,12 +255,9 @@ public void onDestroy(){
 
                 float speed = Math.abs(x + y + z - last_x - last_y - last_z) / diffTime * 10000;
 
-
-
-
                 realm.beginTransaction();
 
-                SensorRecoder sr = realm.createObject(SensorRecoder.class);
+                SensorRecorder sr = realm.createObject(SensorRecorder.class);
                 sr.setxData(x);
                 sr.setyData(y);
                 sr.setzData(z);

@@ -22,7 +22,10 @@ import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.example.shubhamkanodia.roadrunner.Events.ServiceStopEvent;
+import com.example.shubhamkanodia.roadrunner.Events.UploadChangeEvent;
 import com.example.shubhamkanodia.roadrunner.Services.DataLoggerService;
 import com.example.shubhamkanodia.roadrunner.R;
 
@@ -32,6 +35,8 @@ import org.achartengine.model.XYMultipleSeriesDataset;
 import org.achartengine.model.XYSeries;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
+
+import de.greenrobot.event.EventBus;
 
 // In this case, the fragment displays simple text based on the page
 public class MainFragment extends Fragment implements SensorEventListener {
@@ -72,6 +77,9 @@ public class MainFragment extends Fragment implements SensorEventListener {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_main, container, false);
+
+        EventBus.getDefault().register(this);
+
 
         tvAccel = (TextView) view.findViewById(R.id.tvAccel);
         tvAccel2 = (TextView) view.findViewById(R.id.tvAccel2);
@@ -178,6 +186,8 @@ public class MainFragment extends Fragment implements SensorEventListener {
                             dialog.show();
                         } else {
                             startRecorderService();
+                            Toast.makeText(getActivity(), "Recording data in background", Toast.LENGTH_SHORT).show();
+                            getActivity().finish();
 
                         }
                         //gps on
@@ -210,6 +220,7 @@ public class MainFragment extends Fragment implements SensorEventListener {
         super.onPause();
         senSensorManager.unregisterListener(this);
 
+
     }
 
     @Override
@@ -219,11 +230,17 @@ public class MainFragment extends Fragment implements SensorEventListener {
 
     }
 
+    public void onEvent(ServiceStopEvent event) {
+  endRecorderService();
+
+    }
+
 
     @Override
     public void onResume() {
         super.onResume();
         senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+
 
         if (isMyServiceRunning(DataLoggerService.class))
             startRecorderService();

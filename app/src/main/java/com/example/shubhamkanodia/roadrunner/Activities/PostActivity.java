@@ -1,8 +1,13 @@
 package com.example.shubhamkanodia.roadrunner.Activities;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,6 +25,7 @@ import com.parse.ParseObject;
 
 import net.soulwolf.widget.materialradio.MaterialRadioGroup;
 
+import de.greenrobot.event.EventBus;
 import io.realm.Realm;
 
 public class PostActivity extends AppCompatActivity {
@@ -38,10 +44,10 @@ public class PostActivity extends AppCompatActivity {
 
     long startTime;
     long endTime;
-    long startLat;
-    long endLat;
-    long startLong;
-    long endLong;
+    double startLat;
+    double endLat;
+    double startLong;
+    double endLong;
 
 
     @Override
@@ -57,15 +63,18 @@ public class PostActivity extends AppCompatActivity {
         bSave = (Button) findViewById(R.id.bSave);
         bDiscard = (Button) findViewById(R.id.bDiscard);
 
-        extras = getIntent().getExtras();
         realm = Realm.getInstance(this);
 
-        startTime = extras.getLong("start_time");
-        endTime = extras.getLong("end_time");
-        startLat = extras.getLong("start_lat");
-        endLat = extras.getLong("end_lat");
-        startLong = extras.getLong("start_long");
-        endLong = extras.getLong("end_long");
+        extras = getIntent().getExtras();
+        startTime = (long) extras.get("start_time");
+        endTime = (long) extras.get("end_time");
+        startLat = (double) extras.get("start_lat");
+        endLat = (double) extras.get("end_lat");
+        startLong = (double) extras.get("start_long");
+        endLong = (double) extras.get("end_long");
+
+
+
 
         final long totalMinutes = (endTime - startTime) / 1000 / 60;
         final double totalDist = Haversine.haversine(startLat, startLong, endLat, endLong);
@@ -100,24 +109,51 @@ public class PostActivity extends AppCompatActivity {
                 if(Helper.isOnlineOnWifi(PostActivity.this)) {
                     Intent serviceIntent = new Intent(getApplicationContext(), UploadService.class);
                     serviceIntent.putExtra("start_time", startTime);
+                    serviceIntent.putExtra("end_time", endTime);
+
                     startService(serviceIntent);
+                    Toast.makeText(PostActivity.this, "Uploading...", Toast.LENGTH_SHORT).show();
+
                 }
                 else{
-                    Toast.makeText(PostActivity.this, "Saved. Upload from MY TRIPS!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(PostActivity.this, "No Wifi Internet. Saved in MyTrips.", Toast.LENGTH_SHORT).show();
                 }
+                Intent m = new Intent(getApplicationContext(), MainActivity.class);
+                PostActivity.this.startActivity(m);
             }
         });
 
         bDiscard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                finish();
+showWarning();
             }
         });
 
     }
 
 
+    public void showWarning(){
+
+        final AlertDialog.Builder dialog = new AlertDialog.Builder(PostActivity.this);
+        dialog.setMessage("Recorded data will be lost");
+        dialog.setTitle("Are you sure?");
+        dialog.setPositiveButton("Discard Anyway", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface paramDialogInterface, int paramInt) {
+                finish();
+
+            }
+        });
+        dialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface paramDialogInterface, int paramInt) {
+
+            }
+        });
+        dialog.show();
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -140,8 +176,8 @@ public class PostActivity extends AppCompatActivity {
         r.setStart_long(startLong);
         r.setT_mode(getTransport());
         r.setStart_time(startTime);
-
-        Toast.makeText(this, "LATLONG:" + startLat + startLong + " : " + endLat + endLong, Toast.LENGTH_LONG).show();
+        r.setFrom_address("Unknown A");
+        r.setTo_address("Unkown B");
 
         realm.commitTransaction();
 
@@ -179,5 +215,11 @@ public class PostActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        showWarning();
+
     }
 }

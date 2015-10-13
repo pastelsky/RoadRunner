@@ -1,12 +1,14 @@
 package com.example.shubhamkanodia.roadrunner.Models;
 
 import io.realm.RealmObject;
+import io.realm.annotations.PrimaryKey;
 
 /**
  * Created by shubhamkanodia on 11/10/15.
  */
 public class RecordRow extends RealmObject {
 
+    @PrimaryKey
     private long start_time;
     private long end_time;
 
@@ -17,6 +19,27 @@ public class RecordRow extends RealmObject {
     private boolean is_syncing;
 
     private double end_lat;
+
+
+    private String from_address;
+
+    public String getTo_address() {
+        return to_address;
+    }
+
+    public void setTo_address(String to_address) {
+        this.to_address = to_address;
+    }
+
+    public String getFrom_address() {
+        return from_address;
+    }
+
+    public void setFrom_address(String from_address) {
+        this.from_address = from_address;
+    }
+
+    private  String to_address;
 
     public long getStart_time() {
         return start_time;

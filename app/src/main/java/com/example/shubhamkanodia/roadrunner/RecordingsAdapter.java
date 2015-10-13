@@ -1,6 +1,7 @@
 package com.example.shubhamkanodia.roadrunner;
 
 import android.content.Context;
+import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.databinding.ViewDataBinding;
 import android.support.v7.widget.RecyclerView;
@@ -9,7 +10,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.example.shubhamkanodia.roadrunner.Helpers.Helper;
 import com.example.shubhamkanodia.roadrunner.Models.RecordingItem;
+import com.example.shubhamkanodia.roadrunner.Services.UploadService;
 
 import java.util.List;
 
@@ -20,13 +23,16 @@ import java.util.List;
 public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.BindingHolder>  {
     private List<RecordingItem> records;
      static Context context;
+     static private RecyclerViewClickListener itemClicker;
 
 
-    public static class BindingHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+    public static class BindingHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         private ViewDataBinding binding;
 
         public BindingHolder(View v) {
             super(v);
+
+            v.setOnClickListener(this);
             binding = DataBindingUtil.bind(v);
         }
 
@@ -36,13 +42,15 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Bi
 
         @Override
         public void onClick(View v) {
-            Toast.makeText(context, "Clicky", Toast.LENGTH_SHORT).show();
+
+            itemClicker.recyclerViewListClicked(v, getAdapterPosition());
         }
     }
 
-    public RecordingsAdapter(Context context, List<RecordingItem> records) {
+    public RecordingsAdapter(Context context, RecyclerViewClickListener r, List<RecordingItem> records) {
         this.records = records;
         this.context = context;
+        this.itemClicker = r;
     }
 
     @Override
@@ -63,5 +71,10 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Bi
     @Override
     public int getItemCount() {
         return records.size();
+    }
+
+    public interface RecyclerViewClickListener
+    {
+        public void recyclerViewListClicked(View v, int position);
     }
 }
