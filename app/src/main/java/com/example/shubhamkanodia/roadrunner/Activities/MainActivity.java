@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.example.shubhamkanodia.roadrunner.AppCompatPreferenceActivity;
 import com.example.shubhamkanodia.roadrunner.R;
@@ -70,7 +71,7 @@ public void changeFragment(){
 
         if (id == R.id.action_settings) {
 
-            Intent serviceIntent = new Intent(getApplicationContext(), AppCompatPreferenceActivity.class);
+            Intent serviceIntent = new Intent(getApplicationContext(), SettingsActivity.class);
             startService(serviceIntent);
 
             return true;
