@@ -42,14 +42,14 @@ dependencies {
     compile fileTree(dir: 'libs', include: 'Parse-*.jar')
     compile group: 'org.achartengine', name: 'achartengine', version: '1.2.0'
 
-    compile 'com.android.support:appcompat-v7:23.1.1'
-    compile 'com.android.support:design:23.1.1'
-    compile 'io.realm:realm-android:0.83.0'
+    compile 'com.android.support:appcompat-v7:23.+'
+    compile 'com.android.support:design:23.+'
+    compile 'io.realm:realm-android:0.+'
     compile 'com.parse.bolts:bolts-android:1.+'
     compile 'com.nineoldandroids:library:2.+'
-    compile 'net.soulwolf.widget:materialRadio:1.0.1'
+    compile 'net.soulwolf.widget:materialRadio:1.+'
     compile 'com.appyvet:materialrangebar:1.+'
-    compile 'com.android.support:recyclerview-v7:23.1.1'
-    compile 'de.greenrobot:eventbus:2.4.0'
+    compile 'com.android.support:recyclerview-v7:23.+'
+    compile 'de.greenrobot:eventbus:2.+'
     compile 'com.android.support:support-v4:23.1.1'
 }
