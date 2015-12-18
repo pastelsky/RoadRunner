@@ -1,9 +1,9 @@
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:soulwolf="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:soulwolf="http://schemas.android.com/apk/res-auto"
     tools:context="com.example.shubhamkanodia.roadrunner.Activities.PostActivity">
 
 
@@ -11,24 +11,24 @@
         android:id="@+id/tvHeadS"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:fontFamily="sans-serif-condensed"
+        android:padding="8dp"
         android:text="Stats"
+        android:textAllCaps="true"
+        android:textColor="#aaa"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:textColor="#aaa"
-        android:fontFamily="sans-serif-condensed"
-        android:textAllCaps="true"
-        android:padding="8dp"
-        android:layout_marginLeft="8dp"
 
         />
     <LinearLayout
+        android:id="@+id/llStat"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/llStat"
-        android:padding="16dp"
         android:layout_below="@id/tvHeadS"
         android:background="#fcfcfc"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:padding="16dp">
 
 <RelativeLayout
     android:layout_width="0dp"
@@ -37,34 +37,34 @@
  >
 
     <TextView
+        android:id="@+id/tvMinutes"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="67"
-        android:id="@+id/tvMinutes"
-        android:textStyle="bold"
         android:layout_centerHorizontal="true"
-        android:textColor="#444"
         android:fontFamily="sans-serif-condensed"
-        android:textSize="50dp"/>
+        android:text="67"
+        android:textColor="#444"
+        android:textSize="50dp"
+        android:textStyle="bold" />
 
     <TextView
+        android:id="@+id/tvMinutesLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="minutes"
         android:layout_below="@id/tvMinutes"
-        android:id="@+id/tvMinutesLabel"
         android:layout_centerHorizontal="true"
-        android:textColor="#333"
         android:layout_marginTop="-10dp"
         android:fontFamily="sans-serif-condensed"
+        android:text="minutes"
+        android:textColor="#333"
         android:textSize="30dp"/>
 </RelativeLayout>
 
         <View
             android:layout_width="1dp"
             android:layout_height="75dp"
-            android:background="#dedede"
             android:layout_gravity="center_vertical"
+            android:background="#dedede"
             />
 
         <RelativeLayout
@@ -74,160 +74,159 @@
             >
 
             <TextView
+                android:id="@+id/tvDist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="23"
-                android:id="@+id/tvDist"
-                android:textStyle="bold"
                 android:layout_centerHorizontal="true"
-                android:textColor="#444"
                 android:fontFamily="sans-serif-condensed"
-                android:textSize="50dp"/>
+                android:text="23"
+                android:textColor="#444"
+                android:textSize="50dp"
+                android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tvDistLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="kilometers"
                 android:layout_below="@id/tvDist"
-                android:id="@+id/tvDistLabel"
                 android:layout_centerHorizontal="true"
-                android:textColor="#333"
                 android:layout_marginTop="-10dp"
                 android:fontFamily="sans-serif-condensed"
+                android:text="kilometers"
+                android:textColor="#333"
                 android:textSize="30dp"/>
         </RelativeLayout>
     </LinearLayout>
 
     <TextView
+        android:id="@+id/tvHeadR"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@id/llStat"
+        android:layout_marginLeft="8dp"
+        android:fontFamily="sans-serif-condensed"
+        android:padding="8dp"
         android:text="Crop your data"
-        android:id="@+id/tvHeadR"
+        android:textAllCaps="true"
+        android:textColor="#aaa"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:fontFamily="sans-serif-condensed"
-        android:textAllCaps="true"
-        android:padding="8dp"
-        android:textColor="#aaa"
-        android:layout_marginLeft="8dp"
-        android:layout_below="@id/llStat"
         />
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_below="@id/tvHeadR"
         android:id="@+id/llRange"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tvHeadR"
         android:background="#fcfcfc"
-        android:clipChildren="false"
-        android:layout_height="wrap_content">
+        android:clipChildren="false">
 
     <com.appyvet.rangebar.RangeBar
         xmlns:custom="http://schemas.android.com/apk/res-auto"
         android:id="@+id/rangebar"
         android:layout_width="match_parent"
-        android:layout_marginTop="-25dp"
-        android:clipChildren="false"
         android:layout_height="72dp"
-        custom:tickStart="5"
-        custom:tickInterval="1"
-        custom:rangeBar="false"
-        custom:connectingLineColor="#009688"
-        custom:tickEnd="10"
-        custom:tickColor="#00000000"
-        custom:selectorColor="#009688"
-        custom:pinColor="#009688"
-        custom:connectingLineWeight="1dp"
         android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"/>
+        android:layout_marginRight="16dp"
+        android:clipChildren="false"
+        custom:connectingLineColor="#009688"
+        custom:connectingLineWeight="1dp"
+        custom:pinColor="#009688"
+        custom:rangeBar="false"
+        custom:selectorColor="#009688"
+        custom:tickColor="#00000000"
+        custom:tickEnd="10"
+        custom:tickInterval="1"
+        custom:tickStart="5" />
     </LinearLayout>
 
 
     <TextView
+        android:id="@+id/tvHeadT"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="How did you travel?"
-        android:id="@+id/tvHeadT"
-        android:textSize="16sp"
-        android:textStyle="bold"
+        android:layout_below="@id/llRange"
+        android:layout_marginLeft="8dp"
         android:fontFamily="sans-serif-condensed"
-        android:textAllCaps="true"
         android:padding="8dp"
+        android:text="How did you travel?"
+        android:textAllCaps="true"
         android:textColor="#aaa"
 
-        android:layout_marginLeft="8dp"
-        android:layout_below="@id/llRange"
+        android:textSize="16sp"
+        android:textStyle="bold"
         />
 
     <net.soulwolf.widget.materialradio.MaterialRadioGroup
-        android:layout_width="match_parent"
         android:id="@+id/rgTransport"
-        android:gravity="center"
+        android:layout_width="match_parent"
         android:layout_height="100dp"
-        android:padding="14dp"
-        android:background="#fcfcfc"
         android:layout_below="@id/tvHeadT"
-        android:orientation="horizontal">
+        android:background="#fcfcfc"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:padding="14dp">
 
         <net.soulwolf.widget.materialradio.MaterialRadioButton
-            android:layout_width="0dp"
             android:id="@+id/car"
-            android:layout_weight="0.9"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            soulwolf:mcTextSize="6sp"
-            soulwolf:mcText="Car"
             android:layout_marginLeft="15dp"
             android:layout_marginRight="15dp"
-            soulwolf:mcPadding="5dp"
-            soulwolf:mcChecked="true"
+            android:layout_weight="0.9"
             soulwolf:mcAnimator="true"
+            soulwolf:mcButton="@drawable/car_states"
+            soulwolf:mcChecked="true"
+            soulwolf:mcPadding="5dp"
+            soulwolf:mcText="Car"
             soulwolf:mcTextColor="@drawable/radio_press"
-            soulwolf:mcButton="@drawable/car_states"/>
+            soulwolf:mcTextSize="6sp" />
 
 
 
         <net.soulwolf.widget.materialradio.MaterialRadioButton
             android:id="@+id/bus"
             android:layout_width="0dp"
-            android:layout_weight="0.9"
             android:layout_height="match_parent"
-            soulwolf:mcTextSize="6sp"
             android:layout_marginLeft="15dp"
             android:layout_marginRight="15dp"
-            soulwolf:mcText="Bus"
-            soulwolf:mcPadding="5dp"
-            soulwolf:mcChecked="true"
+            android:layout_weight="0.9"
             soulwolf:mcAnimator="true"
+            soulwolf:mcButton="@drawable/bus_states"
+            soulwolf:mcChecked="true"
+            soulwolf:mcPadding="5dp"
+            soulwolf:mcText="Bus"
             soulwolf:mcTextColor="@drawable/radio_press"
-            soulwolf:mcButton="@drawable/bus_states"/>
+            soulwolf:mcTextSize="6sp" />
 
         <net.soulwolf.widget.materialradio.MaterialRadioButton
             android:id="@+id/bike"
             android:layout_width="0dp"
-            android:layout_weight="1.1"
             android:layout_height="match_parent"
-            soulwolf:mcAnimator="true"
-            soulwolf:mcTextSize="6sp"
             android:layout_marginLeft="15dp"
             android:layout_marginRight="15dp"
+            android:layout_weight="1.1"
+            soulwolf:mcAnimator="true"
+            soulwolf:mcButton="@drawable/bike_states"
             soulwolf:mcPadding="5dp"
             soulwolf:mcText="Bike"
             soulwolf:mcTextColor="@drawable/radio_press"
-            soulwolf:mcButton="@drawable/bike_states"/>
+            soulwolf:mcTextSize="6sp" />
 
 
         <net.soulwolf.widget.materialradio.MaterialRadioButton
             android:id="@+id/cycle"
             android:layout_width="0dp"
-            android:layout_weight="1.1"
             android:layout_height="match_parent"
-            soulwolf:mcAnimator="true"
-            soulwolf:mcTextSize="6sp"
             android:layout_marginLeft="15dp"
             android:layout_marginRight="15dp"
+            android:layout_weight="1.1"
+            soulwolf:mcAnimator="true"
+            soulwolf:mcButton="@drawable/cycle_states"
             soulwolf:mcPadding="5dp"
             soulwolf:mcText="Cycle"
             soulwolf:mcTextColor="@drawable/radio_press"
-            soulwolf:mcButton="@drawable/cycle_states"/>
+            soulwolf:mcTextSize="6sp" />
 
 
     </net.soulwolf.widget.materialradio.MaterialRadioGroup>
@@ -247,23 +246,23 @@
     <Button
         android:id="@+id/bDiscard"
         android:layout_width="0dp"
-        android:layout_weight="1"
         android:layout_height="wrap_content"
-        android:padding="22dp"
+        android:layout_weight="1"
         android:background="#1c2b38"
-        android:textColor="#fff"
+        android:padding="22dp"
         android:text="Discard"
+        android:textColor="#fff"
         />
 
         <Button
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:padding="22dp"
-            android:background="#1c2b38"
-            android:textColor="#fff"
-            android:text="Upload Data"
             android:id="@+id/bSave"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="#1c2b38"
+            android:padding="22dp"
+            android:text="Upload Data"
+            android:textColor="#fff"
             />
     </LinearLayout>
 

@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,16 +19,12 @@ import android.widget.Toast;
 import com.example.shubhamkanodia.roadrunner.Events.UploadChangeEvent;
 import com.example.shubhamkanodia.roadrunner.Helpers.Helper;
 import com.example.shubhamkanodia.roadrunner.Models.RecordRow;
-import com.example.shubhamkanodia.roadrunner.Models.SensorRecorder;
-import com.example.shubhamkanodia.roadrunner.R;
 import com.example.shubhamkanodia.roadrunner.Models.RecordingItem;
+import com.example.shubhamkanodia.roadrunner.R;
 import com.example.shubhamkanodia.roadrunner.RecordingsAdapter;
 import com.example.shubhamkanodia.roadrunner.Services.UploadService;
 
-
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 
 import de.greenrobot.event.EventBus;
 import io.realm.Realm;
@@ -40,22 +35,22 @@ import io.realm.RealmResults;
 public class RecordsFragment extends Fragment {
 
     Realm realm;
+    RecordingsAdapter.RecyclerViewClickListener itemListener;
     private TextView tvData;
     private Button bshowData;
     private ListView lvRecords;
     private ArrayList<RecordingItem> records;
     private RecyclerView rvRecords;
     private RecordingsAdapter recordingsAdapter;
-    RecordingsAdapter.RecyclerViewClickListener itemListener;
 
+
+    public RecordsFragment() {
+        // Required empty public constructor
+    }
 
     public static RecordsFragment newInstance() {
         RecordsFragment fragment = new RecordsFragment();
         return fragment;
-    }
-
-    public RecordsFragment() {
-        // Required empty public constructor
     }
 
     @Override
@@ -151,6 +146,7 @@ public class RecordsFragment extends Fragment {
             RealmResults<RecordRow> results = query.findAll();
 
             records.clear();
+
 
             for (RecordRow record : results) {
                 records.add(new RecordingItem(record));

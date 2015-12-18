@@ -2,12 +2,11 @@ package com.example.shubhamkanodia.roadrunner.Activities;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.provider.Settings;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -18,14 +17,13 @@ import android.widget.Toast;
 import com.appyvet.rangebar.RangeBar;
 import com.example.shubhamkanodia.roadrunner.Helpers.Haversine;
 import com.example.shubhamkanodia.roadrunner.Helpers.Helper;
-import com.example.shubhamkanodia.roadrunner.R;
 import com.example.shubhamkanodia.roadrunner.Models.RecordRow;
+import com.example.shubhamkanodia.roadrunner.R;
 import com.example.shubhamkanodia.roadrunner.Services.UploadService;
 import com.parse.ParseObject;
 
 import net.soulwolf.widget.materialradio.MaterialRadioGroup;
 
-import de.greenrobot.event.EventBus;
 import io.realm.Realm;
 
 public class PostActivity extends AppCompatActivity {
@@ -39,16 +37,13 @@ public class PostActivity extends AppCompatActivity {
 
     Realm realm;
     Bundle extras;
-
-    private ParseObject recording;
-
     long startTime;
     long endTime;
     double startLat;
     double endLat;
     double startLong;
     double endLong;
-
+    private ParseObject recording;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +68,15 @@ public class PostActivity extends AppCompatActivity {
         startLong = (double) extras.get("start_long");
         endLong = (double) extras.get("end_long");
 
+        SharedPreferences sharedPrefs = PreferenceManager
+                .getDefaultSharedPreferences(this);
 
+        try {
+            rgTransport.check(sharedPrefs.getInt("tmode_pref", 2));
+        } catch (ClassCastException e) {
+//            rgTransport.check(2);
+
+        }
 
 
         final long totalMinutes = (endTime - startTime) / 1000 / 60;
@@ -99,6 +102,7 @@ public class PostActivity extends AppCompatActivity {
                 }
             }
         });
+
 
         bSave.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -141,7 +145,9 @@ showWarning();
         dialog.setPositiveButton("Discard Anyway", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-                finish();
+
+                Intent i = new Intent(PostActivity.this, MainActivity.class);
+                startActivity(i);
 
             }
         });
@@ -162,6 +168,17 @@ showWarning();
     }
 
     public void saveTrip() {
+
+        SharedPreferences sharedPrefs = PreferenceManager
+                .getDefaultSharedPreferences(this);
+
+        SharedPreferences.Editor editor = sharedPrefs.edit();
+
+        View radioButton = rgTransport.findViewById(rgTransport.getCheckedRadioButtonId());
+        int radioId = rgTransport.indexOfChild(radioButton);
+
+        editor.putInt("tmode_pref", radioId);
+        editor.commit();
 
         realm.beginTransaction();
 

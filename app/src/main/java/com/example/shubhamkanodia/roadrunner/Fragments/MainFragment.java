@@ -25,9 +25,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.shubhamkanodia.roadrunner.Events.ServiceStopEvent;
-import com.example.shubhamkanodia.roadrunner.Events.UploadChangeEvent;
-import com.example.shubhamkanodia.roadrunner.Services.DataLoggerService;
 import com.example.shubhamkanodia.roadrunner.R;
+import com.example.shubhamkanodia.roadrunner.Services.DataLoggerService;
 
 import org.achartengine.ChartFactory;
 import org.achartengine.GraphicalView;
@@ -186,8 +185,12 @@ public class MainFragment extends Fragment implements SensorEventListener {
                             dialog.show();
                         } else {
                             startRecorderService();
-                            Toast.makeText(getActivity(), "Recording data in background", Toast.LENGTH_SHORT).show();
-                            getActivity().finish();
+                            Toast.makeText(getActivity(), "Recording data in background. Stop Recording from notification bar when done.", Toast.LENGTH_LONG).show();
+                            Intent startMain = new Intent(Intent.ACTION_MAIN);
+                            startMain.addCategory(Intent.CATEGORY_HOME);
+                            startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(startMain);
+
 
                         }
                         //gps on
