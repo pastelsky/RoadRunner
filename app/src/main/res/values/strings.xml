@@ -4,7 +4,7 @@
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
 
-<!-- TODO: Remove or change this placeholder text -->
+    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="title_activity_post">Post data</string>
     <string name="title_activity_trial">TrialActivity</string>
@@ -73,4 +73,76 @@
     <string name="pref_ringtone_silent">Silent</string>
 
     <string name="pref_title_vibrate">Vibrate</string>
+    <string name="what_text"><u>How does this app work?</u></string>
+    <string name="title_activity_about">How does it work?</string>
+    <string name="large_text">
+        <![CDATA[
+
+       " <h2><font color=\'#444\'> Our Aim </font></h2>
+        <p>
+       This project is an attempt to collect data on Bangalore\'s road terrain conditions from frequent travellers like you.
+        All you need to do is to record your daily office, school or any other journey you make using your smartphone.
+        </p>
+
+        <p>
+        When you get back on Wifi, we\'ll sync this data to our servers.
+         </p>
+
+         <h2><font color=\'#444\'> Our mission </font></h2>
+         <p>
+         Our mission
+        is to map out irregular terrain, potholes, and unscientific speed - breakers for a majority of roads in the city, using the power of crowdsourcing.
+        <p>
+
+        <h2><font color=\'#444\'> FAQ's </font></h2>
+
+
+        <h5>What kind of data is collected?</h5>
+        <p>
+        We utilize your device\'s accelerometer sensor, which would otherwise remain idle, to measure vibrations as you embark on
+        your journey through pothole-ridden roads of Bangalore.
+        </p>
+        <p>Data  is collected anonymously, and we maintain no information
+        about your route or the time of your travel.
+        </p>
+
+        <h5>What are you going to do with so much data from so many people?</h5>
+        <p>
+Making sense of huge data sets is going to be a challenging task, no doubt. We\'re excited about creating an open database of all major and minor potholes in the city, and this can be used in exciting ways. </p>
+<p>For example, users could quantify conditions of each road stretch, rank city roads based on their "<i>travelability</i>". They could develop a historical record of how road terrains deteriorate over time, and point out inefficiences in construction. If we succeed in maintaining reliability, we can confront local authorities with this data and exert pressure on them for a fix.
+        </p>
+
+        <h5>How does it affect my battery life?</h5>
+        <p>
+        While you could plug your device into a travel charger, its not a requirement as the application is designed with optimal battery usage in mind.
+        </p>
+        <p>Sensors are coerced for data only when your\'re moving, and sleep when you stop for extended periods of time. e.g.due to a traffic signal. We\'re working to make it more efficient with every release. <i>We promise</i>.
+        </p>
+
+        <h5>Do I need to keep my device steady?</h5>
+        <p>
+        While we recommend keeping your device in a place with very little auxiliary movement, there is no need to chain your device down your dashboard. Pocket, your bag will do just fine. Afterall, <i>its gotta move if its gotta groove</i>, right?
+        </p>
+
+        <h5>Can I use my device to take calls in the meanwhile?</h5>ddfsddsfssdf
+        <p>
+     But ofcourse! We pause recording when you use your phone for making\//recieving calls or searching for photos of cute kittens.
+
+          </p>
+            <p>
+     This also means that you should try keep your interactions with your device to a minimum if for recordings to be effective. Yet another reason to not use your phone while you drive.
+        </p>
+
+        <h5>What if i travel in a bus?</h5>
+        <p>
+You could use your journeys aboard buses and ricks to record data too. Suspensions systems in BMTC buses work hard to make sure will make even not even the most tiny hump stays unnoticed. ;)
+        </p>
+
+        <h4>"
+
+
+
+
+        ]]>
+    </string>
 </resources>

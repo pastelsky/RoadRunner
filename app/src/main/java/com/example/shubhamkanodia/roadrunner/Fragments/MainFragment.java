@@ -24,6 +24,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.shubhamkanodia.roadrunner.Activities.AboutActivity;
 import com.example.shubhamkanodia.roadrunner.Events.ServiceStopEvent;
 import com.example.shubhamkanodia.roadrunner.R;
 import com.example.shubhamkanodia.roadrunner.Services.DataLoggerService;
@@ -35,6 +36,8 @@ import org.achartengine.model.XYSeries;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
 
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
 
 // In this case, the fragment displays simple text based on the page
@@ -78,11 +81,8 @@ public class MainFragment extends Fragment implements SensorEventListener {
         View view = inflater.inflate(R.layout.fragment_main, container, false);
 
         EventBus.getDefault().register(this);
+        ButterKnife.bind(this, view);
 
-
-        tvAccel = (TextView) view.findViewById(R.id.tvAccel);
-        tvAccel2 = (TextView) view.findViewById(R.id.tvAccel2);
-        tvLocation = (TextView) view.findViewById(R.id.tvLocation);
         bRecord = (Button) view.findViewById(R.id.bRecord);
         chronometer = (Chronometer) view.findViewById(R.id.chronometer);
 
@@ -325,5 +325,10 @@ public class MainFragment extends Fragment implements SensorEventListener {
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
 
+    }
+
+    @OnClick(R.id.tvWhat)
+    public void clickWhat(View view) {
+        startActivity(new Intent(getContext(), AboutActivity.class));
     }
 }
