@@ -67,6 +67,7 @@ dependencies {
     compile 'com.jakewharton:butterknife:7.0.1'
     compile 'com.android.support:cardview-v7:23.+'
     compile 'com.github.AlbertGrobas:MovingImageView:381fddac64'
+    compile 'com.github.deano2390:MaterialShowcaseView:1.0.5@aar'
 
 
 }

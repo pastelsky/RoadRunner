@@ -18,10 +18,10 @@ import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.shubhamkanodia.roadrunner.Activities.AboutActivity;
@@ -36,32 +36,28 @@ import org.achartengine.model.XYSeries;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
 
+import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
+import uk.co.deanwild.materialshowcaseview.MaterialShowcaseView;
 
 // In this case, the fragment displays simple text based on the page
 public class MainFragment extends Fragment implements SensorEventListener {
 
-
-    private TextView tvAccel;
-    private TextView tvAccel2;
-    private TextView tvLocation;
+    @Bind(R.id.vDummy)
+    View vDummy;
     private Chronometer chronometer;
     private Button bRecord;
-
     private LinearLayout lvChart;
     private XYSeries Xseries;
     private XYSeries Yseries;
     private XYSeries Zseries;
-
     private GraphicalView chartView;
     private XYMultipleSeriesRenderer mRenderer;
     private SensorManager senSensorManager;
     private Sensor senAccelerometer;
     private long lastUpdate = 0;
-
-
     private boolean isRecodring = false;
 
     public static MainFragment newInstance() {
@@ -83,10 +79,20 @@ public class MainFragment extends Fragment implements SensorEventListener {
         EventBus.getDefault().register(this);
         ButterKnife.bind(this, view);
 
+
         bRecord = (Button) view.findViewById(R.id.bRecord);
         chronometer = (Chronometer) view.findViewById(R.id.chronometer);
 
         lvChart = (LinearLayout) view.findViewById(R.id.lvChart);
+
+        new MaterialShowcaseView.Builder(getActivity())
+                .setTarget(vDummy)
+                .setDismissText("GOT IT")
+                .setContentText("When you're ready to begin your journey, start recording.")
+                .setDelay(200) // optional but starting animations immediately in onCreate can make them choppy
+                .singleUse("show_showcase1") // provide a unique ID used to ensure it is only shown once
+                .show();
+
 
         Xseries = new XYSeries("X Axis");
         Yseries = new XYSeries("Y Axis");
@@ -144,66 +150,67 @@ public class MainFragment extends Fragment implements SensorEventListener {
         lvChart.addView(chartView);
 
 
+        bRecord.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
 
-            bRecord.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
+                if (!isRecodring) {
 
-                    if (!isRecodring) {
+                    LocationManager lm = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+                    boolean gps_enabled = false;
 
-                        LocationManager lm = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-                        boolean gps_enabled = false;
-
-                        try {
-                            gps_enabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
-                        } catch (Exception ex) {
-                        }
-
-
-                        if (!gps_enabled) {
-                            // notify user
-                            final AlertDialog.Builder dialog = new AlertDialog.Builder(getActivity());
-                            dialog.setMessage("We need your GPS data to be recorded too!");
-                            dialog.setIcon(R.drawable.ic_location);
-                            dialog.setTitle("Please enable Location");
-                            dialog.setPositiveButton("Turn On GPS", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-
-                                    Intent myIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                                    getActivity().startActivity(myIntent);
-                                    //get gps
-                                }
-                            });
-                            dialog.setNegativeButton("Not Now", new DialogInterface.OnClickListener() {
-
-                                @Override
-                                public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-
-                                }
-                            });
-                            dialog.show();
-                        } else {
-                            startRecorderService();
-                            Toast.makeText(getActivity(), "Recording data in background. Stop Recording from notification bar when done.", Toast.LENGTH_LONG).show();
-                            Intent startMain = new Intent(Intent.ACTION_MAIN);
-                            startMain.addCategory(Intent.CATEGORY_HOME);
-                            startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            startActivity(startMain);
+                    try {
+                        gps_enabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+                    } catch (Exception ex) {
+                    }
 
 
-                        }
-                        //gps on
+                    if (!gps_enabled) {
+                        // notify user
+                        AlertDialog.Builder dialog = new AlertDialog.Builder(getActivity());
+                        dialog.setMessage("We need your GPS data to be recorded too!")
+                                .setIcon(R.drawable.ic_location)
+                                .setTitle("Please enable Location")
+                                .setPositiveButton("Turn On GPS", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface paramDialogInterface, int paramInt) {
 
+                                        Intent myIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                                        getActivity().startActivity(myIntent);
+                                    }
+                                })
+                                .setNegativeButton("Not Now", new DialogInterface.OnClickListener() {
 
-                    }// if not recording
-                    else {
-                        endRecorderService();
+                                    @Override
+                                    public void onClick(DialogInterface paramDialogInterface, int paramInt) {
+
+                                    }
+                                });
+
+                        AlertDialog ad = dialog.create();
+                        ad.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+
+                    } else {
+                        startRecorderService();
+                        Toast.makeText(getActivity(), "Recording data in background. Stop Recording from notification bar when done.", Toast.LENGTH_LONG).show();
+                        Intent startMain = new Intent(Intent.ACTION_MAIN);
+                        startMain.addCategory(Intent.CATEGORY_HOME);
+                        startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(startMain);
+
 
                     }
-                }
+                    //gps on
 
-            });
+
+                }// if not recording
+                else {
+                    endRecorderService();
+
+                }
+            }
+
+        });
 
         senSensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
         senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -234,7 +241,7 @@ public class MainFragment extends Fragment implements SensorEventListener {
     }
 
     public void onEvent(ServiceStopEvent event) {
-  endRecorderService();
+        endRecorderService();
 
     }
 
@@ -242,7 +249,7 @@ public class MainFragment extends Fragment implements SensorEventListener {
     @Override
     public void onResume() {
         super.onResume();
-        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
 
 
         if (isMyServiceRunning(DataLoggerService.class))

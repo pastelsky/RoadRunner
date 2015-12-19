@@ -5,13 +5,14 @@ import android.app.Application;
 import com.example.shubhamkanodia.roadrunner.Helpers.Helper;
 import com.parse.Parse;
 
-import io.realm.Realm;
-
 /**
  * Created by shubhamkanodia on 07/09/15.
  */
 
 public class ParseApplication extends Application {
+
+    public boolean isDataLoggerServiceRunning = false;
+
 
     @Override
     public void onCreate() {
