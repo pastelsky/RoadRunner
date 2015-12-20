@@ -1,5 +1,7 @@
 package com.example.shubhamkanodia.roadrunner.Models;
 
+import com.parse.ParseGeoPoint;
+import com.parse.ParseInstallation;
 import com.parse.ParseObject;
 
 import java.util.Date;
@@ -32,14 +34,13 @@ public class Journey extends RealmObject {
 
     ;
 
-    public Journey(double startLat, double endLat, double startLong, double endLong, Date startTime, Date endTime, String volunteerIdentity, String volunteerEmail) {
+    public Journey(double startLat, double endLat, double startLong, double endLong, Date startTime, Date endTime, String volunteerEmail) {
         this.startLat = startLat;
         this.endLat = endLat;
         this.startLong = startLong;
         this.endLong = endLong;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.volunteerIdentity = volunteerIdentity;
         this.volunteerEmail = volunteerEmail;
         this.isSynced = false;
 
@@ -47,19 +48,22 @@ public class Journey extends RealmObject {
 
     public static ParseObject convertToParseObject(Journey j) {
 
-        ParseObject p = new ParseObject("Journies");
+        ParseObject p = new ParseObject("Journeys");
 
-        p.add("startLat", j.getStartLat());
-        p.add("startLong", j.getStartLong());
+        ParseGeoPoint pgpStart = new ParseGeoPoint(j.getStartLat(), j.getStartLong());
+        ParseGeoPoint pgpEnd = new ParseGeoPoint(j.getEndLat(), j.getEndLong());
 
-        p.add("endLat", j.getEndLat());
-        p.add("endLong", j.getEndLong());
+
+        p.add("startPoint", pgpStart);
+        p.add("endPoint", pgpEnd);
 
         p.add("startTime", j.getStartTime());
         p.add("endTime", j.getEndTime());
 
         p.add("volunteerEmail", j.volunteerEmail);
-        p.add("volunteerIdentity", j.volunteerIdentity);
+
+        ParseInstallation pins = ParseInstallation.getCurrentInstallation();
+        p.add("volunteerIdentity", pins);
 
         return p;
     }

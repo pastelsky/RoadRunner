@@ -6,19 +6,14 @@ import android.content.Intent;
 import android.os.Environment;
 import android.os.IBinder;
 import android.support.v7.app.NotificationCompat;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.Gravity;
 import android.widget.Toast;
 
 import com.example.shubhamkanodia.roadrunner.Events.UploadChangeEvent;
 import com.example.shubhamkanodia.roadrunner.Helpers.Helper;
-import com.example.shubhamkanodia.roadrunner.Models.RecordingItem;
-import com.example.shubhamkanodia.roadrunner.R;
 import com.example.shubhamkanodia.roadrunner.Models.RecordRow;
 import com.example.shubhamkanodia.roadrunner.Models.SensorRecorder;
-import com.example.shubhamkanodia.roadrunner.RecordingsAdapter;
+import com.example.shubhamkanodia.roadrunner.R;
 import com.parse.ParseFile;
 import com.parse.ParseObject;
 import com.parse.SaveCallback;
@@ -32,15 +27,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import de.greenrobot.event.EventBus;
 import io.realm.Realm;
-import io.realm.RealmObject;
 import io.realm.RealmQuery;
 import io.realm.RealmResults;
 

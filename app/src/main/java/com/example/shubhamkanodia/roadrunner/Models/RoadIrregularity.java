@@ -11,11 +11,12 @@ import io.realm.RealmObject;
  */
 public class RoadIrregularity extends RealmObject {
 
-    public static final int THRESHOLD_VIBRATION = 8;
-    public static final int THRESHOLD_LOW = 10;
-    public static final int THRESHOLD_MEDIUM = 13;
-    public static final int THRESHOLD_HIGH = 16;
-    public static final int THRESHOLD_VERY_HIGH = 19;
+    public static final double THRESHOLD_VIBRATION = 2.5f;
+    public static final double THRESHOLD_LOW = 4f;
+    public static final double THRESHOLD_MEDIUM = 6f;
+    public static final double THRESHOLD_HIGH = 7.5f;
+    public static final double THRESHOLD_VERY_HIGH = 9f;
+
     //Constants
     public static final int LEVEL_VIBRATION = 0;
     public static final int LEVEL_LOW = 1;

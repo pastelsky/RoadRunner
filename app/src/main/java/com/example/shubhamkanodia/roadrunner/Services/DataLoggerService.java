@@ -41,10 +41,11 @@ import com.example.shubhamkanodia.roadrunner.Helpers.XYZProcessor;
 import com.example.shubhamkanodia.roadrunner.Models.Journey;
 import com.example.shubhamkanodia.roadrunner.Models.RoadIrregularity;
 import com.example.shubhamkanodia.roadrunner.R;
-import com.parse.ParseInstallation;
+import com.parse.ParseObject;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import de.greenrobot.event.EventBus;
 import io.realm.Realm;
@@ -73,7 +74,6 @@ public class DataLoggerService extends Service implements SensorEventListener {
     SensorManager senSensorManager;
     Sensor senAccelerometer;
 
-
     Vibrator vibrator;
 
     ArrayList<Double> slidingWindow;
@@ -81,6 +81,8 @@ public class DataLoggerService extends Service implements SensorEventListener {
     Date startTime;
     boolean requireMovement;
     Realm realm;
+
+    List<ParseObject> pj = new ArrayList<ParseObject>();
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -98,6 +100,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
             stopSelf();
         } else {
             wasStartedSuccessfully = true;
+            Toast.makeText(this, "Recording data in background. Stop recording from notification bar when done.", Toast.LENGTH_LONG).show();
 
         }
 
@@ -118,7 +121,6 @@ public class DataLoggerService extends Service implements SensorEventListener {
                         "Stop Recording", contentIntent).build();
 
         startForeground(Constants.RECORD_NOTIF_ID, notification);
-        Toast.makeText(this, "Recording data in background. Stop recording from notification bar when done.", Toast.LENGTH_LONG).show();
 
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -206,11 +208,19 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
 
             Journey newJourney = new Journey(initLat, curLat, initLong, curLong,
-                    startTime, endTime, ParseInstallation.getCurrentInstallation().getInstallationId(), HARDCODED_EMAIL);
+                    startTime, endTime, HARDCODED_EMAIL);
 
             realm.beginTransaction();
             Journey journeyToSave = realm.copyToRealm(newJourney);
             realm.commitTransaction();
+
+//            Journey.convertToParseObject(newJourney);
+//            ParseObject.saveAllInBackground(pj);
+//
+//            ParseObject gameScore = new ParseObject("GameScore");
+//            gameScore.put("time", journeyToSave.getEndTime());
+//            gameScore.put("cheatMode", false);
+//            gameScore.saveInBackground();
 
 //            Intent m = new Intent(this, MainActivity.class);
 //            m.setAction(Intent.ACTION_MAIN);
@@ -245,6 +255,9 @@ public class DataLoggerService extends Service implements SensorEventListener {
             wasStartedSuccessfully = false;
 
         }
+
+        unregisterReceiver(stopServiceReceiver);
+
 
     }
 
@@ -305,20 +318,29 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
                 if (slidingWindow.size() >= Constants.SLIDING_WINDOW_CAPACITY) {
                     Log.e("STDEV: ", "STDEV: " + Helper.stdev(slidingWindow));
+
+                    if (Helper.stdev(slidingWindow) > RoadIrregularity.THRESHOLD_VIBRATION) {
+
+                        int intensity = RoadIrregularity.getIntensityLevel(processor.normalizedValue);
+
+                        realm.beginTransaction();
+
+                        RoadIrregularity roadIrregularity = new RoadIrregularity(intensity, curLat, curLong, new Date());
+                        RoadIrregularity toSave = realm.copyToRealm(roadIrregularity);
+
+                        realm.commitTransaction();
+
+                        pj.add(RoadIrregularity.convertToParseObject(roadIrregularity));
+                    }
+
                     slidingWindow.clear();
+
                 }
                 slidingWindow.add(processor.normalizedValue);
 
 
                 if (processor.normalizedValue > RoadIrregularity.THRESHOLD_VIBRATION) {
 
-                    int intensity = RoadIrregularity.getIntensityLevel(processor.normalizedValue);
-
-                    realm.beginTransaction();
-                    RoadIrregularity roadIrregularity = new RoadIrregularity(intensity, curLat, curLong, new Date());
-                    RoadIrregularity toSave = realm.copyToRealm(roadIrregularity);
-
-                    realm.commitTransaction();
 
                 }
 

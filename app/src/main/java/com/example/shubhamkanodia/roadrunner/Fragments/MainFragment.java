@@ -8,6 +8,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -91,6 +92,12 @@ public class MainFragment extends Fragment implements SensorEventListener {
         senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
 
+        if (!DataLoggerService.wasStartedSuccessfully) {
+            setEndUI();
+        } else {
+            setStartUI();
+        }
+
         return view;
     }
 
@@ -143,36 +150,31 @@ public class MainFragment extends Fragment implements SensorEventListener {
             }
         }
     }
-//
-//    public void startRecorderService() {
-//
-//        bRecord.setBackgroundColor(Color.RED);
-//        bRecord.setText("Recording data...");
-//        bRecord.setTextColor(Color.RED);
-//        bRecord.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_record, 0, 0, 0);
-//        chronometer.setBase(SystemClock.elapsedRealtime());
-//        chronometer.start();
-//
-//
-//        Intent intent = new Intent(getActivity().getApplicationContext(), DataLoggerService.class);
-//
-//        if (!isMyServiceRunning(DataLoggerService.class))
-//            getActivity().startService(intent);
-//
-//    }
-//
-//    public void endRecorderService() {
-//
-//        bRecord.setBackgroundColor(Color.parseColor("#1c2b38"));
-//        bRecord.setTextColor(0x88ffffff);
-//        bRecord.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_record_inactive, 0, 0, 0);
-//        chronometer.stop();
-//
-//        bRecord.setText("Start Data Collection");
-//        Intent intent = new Intent(getActivity().getApplicationContext(), DataLoggerService.class);
-//        getActivity().stopService(intent);
-//
-//    }
+
+    public void setStartUI() {
+
+        bRecord.setBackgroundColor(Color.RED);
+        bRecord.setText("Recording data...");
+        bRecord.setTextColor(Color.RED);
+        bRecord.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_record, 0, 0, 0);
+        chronometer.setBase(SystemClock.elapsedRealtime());
+        chronometer.start();
+
+
+    }
+
+    public void setEndUI() {
+
+        bRecord.setBackgroundColor(Color.parseColor("#1c2b38"));
+        bRecord.setTextColor(0x88ffffff);
+        bRecord.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_record_inactive, 0, 0, 0);
+        chronometer.stop();
+
+        bRecord.setText("Start Data Collection");
+        Intent intent = new Intent(getActivity().getApplicationContext(), DataLoggerService.class);
+        getActivity().stopService(intent);
+
+    }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
@@ -188,11 +190,14 @@ public class MainFragment extends Fragment implements SensorEventListener {
     public void toggleRecorder(View v) {
         Button toggleButton = (Button) v;
 
+        if (!DataLoggerService.wasStartedSuccessfully) {
 
-        if (DataLoggerService.wasStartedSuccessfully)
-            getActivity().startService(new Intent(getActivity(), DataLoggerService.class));
-        else
-            getActivity().stopService(new Intent(getActivity(), DataLoggerService.class));
+            getActivity().startService(new Intent(getActivity().getApplicationContext(), DataLoggerService.class));
+            setStartUI();
+        } else {
+            getActivity().stopService(new Intent(getActivity().getApplicationContext(), DataLoggerService.class));
+            setEndUI();
+        }
     }
 
     public void prepareChart() {

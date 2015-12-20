@@ -1,4 +1,4 @@
-package com.example.shubhamkanodia.roadrunner;
+package com.example.shubhamkanodia.roadrunner.Adapters;
 
 import android.content.Context;
 import android.support.v4.app.Fragment;

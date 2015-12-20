@@ -8,8 +8,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.example.shubhamkanodia.roadrunner.Adapters.SampleFragmentPagerAdapter;
 import com.example.shubhamkanodia.roadrunner.R;
-import com.example.shubhamkanodia.roadrunner.SampleFragmentPagerAdapter;
 
 
 public class MainActivity extends AppCompatActivity {

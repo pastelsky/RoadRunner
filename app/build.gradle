@@ -51,7 +51,6 @@ repositories {
 
 dependencies {
     testCompile 'junit:junit:4.12'
-    compile fileTree(dir: 'libs', include: 'Parse-*.jar')
     compile group: 'org.achartengine', name: 'achartengine', version: '1.2.0'
 
     compile 'com.android.support:appcompat-v7:23.+'
@@ -68,6 +67,9 @@ dependencies {
     compile 'com.android.support:cardview-v7:23.+'
     compile 'com.github.AlbertGrobas:MovingImageView:381fddac64'
     compile 'com.github.deano2390:MaterialShowcaseView:1.0.5@aar'
+    compile 'com.parse:parse-android:1.+'
+    debugCompile 'com.parse:parseinterceptors:0.0.1'
+    compile 'com.facebook.stetho:stetho:1.2.0'
 
 
 }

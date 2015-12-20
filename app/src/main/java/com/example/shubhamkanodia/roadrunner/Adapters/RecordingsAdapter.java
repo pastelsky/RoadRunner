@@ -1,18 +1,15 @@
-package com.example.shubhamkanodia.roadrunner;
+package com.example.shubhamkanodia.roadrunner.Adapters;
 
 import android.content.Context;
-import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.databinding.ViewDataBinding;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
-import com.example.shubhamkanodia.roadrunner.Helpers.Helper;
 import com.example.shubhamkanodia.roadrunner.Models.RecordingItem;
-import com.example.shubhamkanodia.roadrunner.Services.UploadService;
+import com.example.shubhamkanodia.roadrunner.R;
 
 import java.util.List;
 
@@ -21,31 +18,10 @@ import java.util.List;
  */
 
 public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.BindingHolder>  {
-    private List<RecordingItem> records;
      static Context context;
      static private RecyclerViewClickListener itemClicker;
+    private List<RecordingItem> records;
 
-
-    public static class BindingHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        private ViewDataBinding binding;
-
-        public BindingHolder(View v) {
-            super(v);
-
-            v.setOnClickListener(this);
-            binding = DataBindingUtil.bind(v);
-        }
-
-        public ViewDataBinding getBinding() {
-            return binding;
-        }
-
-        @Override
-        public void onClick(View v) {
-
-            itemClicker.recyclerViewListClicked(v, getAdapterPosition());
-        }
-    }
 
     public RecordingsAdapter(Context context, RecyclerViewClickListener r, List<RecordingItem> records) {
         this.records = records;
@@ -76,5 +52,26 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Bi
     public interface RecyclerViewClickListener
     {
         public void recyclerViewListClicked(View v, int position);
+    }
+
+    public static class BindingHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        private ViewDataBinding binding;
+
+        public BindingHolder(View v) {
+            super(v);
+
+            v.setOnClickListener(this);
+            binding = DataBindingUtil.bind(v);
+        }
+
+        public ViewDataBinding getBinding() {
+            return binding;
+        }
+
+        @Override
+        public void onClick(View v) {
+
+            itemClicker.recyclerViewListClicked(v, getAdapterPosition());
+        }
     }
 }
