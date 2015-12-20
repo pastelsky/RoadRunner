@@ -4,12 +4,10 @@ import android.text.format.DateUtils;
 
 import com.example.shubhamkanodia.roadrunner.Helpers.Haversine;
 
-import io.realm.RealmObject;
-
 /**
  * Created by shubhamkanodia on 04/09/15.
  */
-public class RecordingItem extends RealmObject {
+public class RecordingItem {
 
     public long start_time;
     public  long end_time;
@@ -24,9 +22,10 @@ public class RecordingItem extends RealmObject {
 
     public String from_address;
     public String to_address;
-    private double end_lat;
-    private double end_long;
-    private int upload_progress;
+    public double end_lat;
+    public double end_long;
+    public int upload_progress;
+
 
     public RecordingItem(RecordRow recordRow){
 

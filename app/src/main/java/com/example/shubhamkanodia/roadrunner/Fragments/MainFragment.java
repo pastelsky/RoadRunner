@@ -113,7 +113,7 @@ public class MainFragment extends Fragment implements SensorEventListener {
     @Override
     public void onResume() {
         super.onResume();
-        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
 
     }
 
@@ -187,6 +187,7 @@ public class MainFragment extends Fragment implements SensorEventListener {
     @OnClick(R.id.bRecord)
     public void toggleRecorder(View v) {
         Button toggleButton = (Button) v;
+
 
         if (DataLoggerService.wasStartedSuccessfully)
             getActivity().startService(new Intent(getActivity(), DataLoggerService.class));

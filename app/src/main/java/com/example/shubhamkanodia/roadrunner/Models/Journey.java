@@ -12,17 +12,25 @@ import io.realm.RealmObject;
 public class Journey extends RealmObject {
 
 
-    double startLat;
-    double endLat;
+    private double startLat;
+    private double endLat;
 
-    double startLong;
-    double endLong;
+    private double startLong;
+    private double endLong;
 
-    Date startTime;
-    Date endTime;
+    private Date startTime;
+    private Date endTime;
 
-    String volunteerIdentity;
-    String volunteerEmail;
+    private String volunteerIdentity;
+    private String volunteerEmail;
+
+
+    private boolean isSynced;
+
+    public Journey() {
+    }
+
+    ;
 
     public Journey(double startLat, double endLat, double startLong, double endLong, Date startTime, Date endTime, String volunteerIdentity, String volunteerEmail) {
         this.startLat = startLat;
@@ -33,11 +41,13 @@ public class Journey extends RealmObject {
         this.endTime = endTime;
         this.volunteerIdentity = volunteerIdentity;
         this.volunteerEmail = volunteerEmail;
+        this.isSynced = false;
+
     }
 
     public static ParseObject convertToParseObject(Journey j) {
 
-        ParseObject p = new ParseObject("Journey");
+        ParseObject p = new ParseObject("Journies");
 
         p.add("startLat", j.getStartLat());
         p.add("startLong", j.getStartLong());
@@ -52,6 +62,14 @@ public class Journey extends RealmObject {
         p.add("volunteerIdentity", j.volunteerIdentity);
 
         return p;
+    }
+
+    public boolean isSynced() {
+        return isSynced;
+    }
+
+    public void setSynced(boolean synced) {
+        isSynced = synced;
     }
 
     public double getStartLat() {

@@ -15,6 +15,19 @@ public class WifiConnectedReceiver extends BroadcastReceiver {
 
         if(Helper.isOnlineOnWifi(context)){
 
+            //Fetch all journeys that have isSynced = false
+
+
+            //For each journey, get all road irregularties bounded by start and end time
+
+
+            //Save each irregularity to parse
+
+
+            //Save each journey to parse
+
+
+            //Change isSynced to true for the journeys
 
         }
 

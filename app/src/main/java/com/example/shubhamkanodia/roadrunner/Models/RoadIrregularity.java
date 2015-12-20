@@ -1,5 +1,7 @@
 package com.example.shubhamkanodia.roadrunner.Models;
 
+import com.parse.ParseObject;
+
 import java.util.Date;
 
 import io.realm.RealmObject;
@@ -15,17 +17,23 @@ public class RoadIrregularity extends RealmObject {
     public static final int THRESHOLD_HIGH = 16;
     public static final int THRESHOLD_VERY_HIGH = 19;
     //Constants
-    private static final int LEVEL_VIBRATION = 0;
-    private static final int LEVEL_LOW = 1;
-    private static final int LEVEL_MEDIUM = 2;
-    private static final int LEVEL_HIGH = 3;
-    private static final int LEVEL_VERY_HIGH = 4;
-    private static final int LEVEL_EXTREME = 5;
-    double latitude;
-    double longitude;
+    public static final int LEVEL_VIBRATION = 0;
+    public static final int LEVEL_LOW = 1;
+    public static final int LEVEL_MEDIUM = 2;
+    public static final int LEVEL_HIGH = 3;
+    public static final int LEVEL_VERY_HIGH = 4;
+    public static final int LEVEL_EXTREME = 5;
 
-    Date timeRecorded;
-    int intensity;
+    private double latitude;
+    private double longitude;
+
+    private Date timeRecorded;
+    private int intensity;
+
+    public RoadIrregularity() {
+    }
+
+    ;
 
     public RoadIrregularity(int intensity, double latitude, double longitude, Date timeRecorded) {
         this.latitude = latitude;
@@ -53,6 +61,18 @@ public class RoadIrregularity extends RealmObject {
         else
             return LEVEL_EXTREME;
 
+    }
+
+    public static ParseObject convertToParseObject(RoadIrregularity r) {
+
+        ParseObject p = new ParseObject("RoadIrregularities");
+
+        p.add("latitude", r.getLatitude());
+        p.add("longitude", r.getLongitude());
+        p.add("timeRecorded", r.getTimeRecorded());
+        p.add("intensity", r.getIntensity());
+
+        return p;
     }
 
     public int getIntensity() {
