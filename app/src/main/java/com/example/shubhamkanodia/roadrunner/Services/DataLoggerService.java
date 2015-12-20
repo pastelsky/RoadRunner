@@ -49,6 +49,7 @@ import java.util.List;
 
 import de.greenrobot.event.EventBus;
 import io.realm.Realm;
+import io.realm.RealmList;
 
 /**
  * Created by shubhamkanodia on 05/09/15.
@@ -81,6 +82,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
     Date startTime;
     boolean requireMovement;
     Realm realm;
+    RealmList<RoadIrregularity> roadIrregularityRealmList;
 
     List<ParseObject> pj = new ArrayList<ParseObject>();
 
@@ -88,6 +90,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         initService();
+        roadIrregularityRealmList = new RealmList<>();
 
         if (wasStartedSuccessfully)
             destroyService();
@@ -137,6 +140,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
                 curLat = location.getLatitude();
                 curLong = location.getLongitude();
+                Toast.makeText(getApplicationContext(), "location changed", Toast.LENGTH_SHORT).show();
 
             }
 
@@ -203,17 +207,22 @@ public class DataLoggerService extends Service implements SensorEventListener {
         if (wasStartedSuccessfully) {
 
             Date endTime = new Date();
-
-            long totalJourneyTime = (startTime.getTime() - endTime.getTime()) / 1000;
-
-
+//
+//            long totalJourneyTime = (startTime.getTime() - endTime.getTime()) / 1000;
+//
+//
             Journey newJourney = new Journey(initLat, curLat, initLong, curLong,
                     startTime, endTime, HARDCODED_EMAIL);
 
-            realm.beginTransaction();
-            Journey journeyToSave = realm.copyToRealm(newJourney);
-            realm.commitTransaction();
+//            realm.beginTransaction();
+//            Journey journeyToSave = realm.copyToRealm(newJourney);
+//            realm.commitTransaction();
 
+            realm.beginTransaction();
+            newJourney.setroadIrregularityRealmList(roadIrregularityRealmList);
+            realm.copyToRealm(newJourney);
+            realm.commitTransaction();
+            startService(new Intent(DataLoggerService.this, UploadService.class));
 //            Journey.convertToParseObject(newJourney);
 //            ParseObject.saveAllInBackground(pj);
 //
@@ -339,8 +348,20 @@ public class DataLoggerService extends Service implements SensorEventListener {
                 slidingWindow.add(processor.normalizedValue);
 
 
-                if (processor.normalizedValue > RoadIrregularity.THRESHOLD_VIBRATION) {
+                Log.e("prcoessor", "" + processor.normalizedValue);
 
+                //This part is faked. Case of pothole detected. You said u have made changes, considering only stdev.
+                if (processor.normalizedValue - 5 > RoadIrregularity.THRESHOLD_VERY_HIGH) {
+                    int intensity = RoadIrregularity.getIntensityLevel(processor.normalizedValue);
+
+                    RoadIrregularity roadIrregularity = new RoadIrregularity(intensity, curLat, curLong, new Date());
+
+                    roadIrregularityRealmList.add(roadIrregularity);
+                    Log.e("adding irregularity", String.valueOf(roadIrregularity.getLatitude()) + String.valueOf(roadIrregularity.getLongitude()));
+
+
+//                    RoadIrregularity toSave = realm.copyToRealm(roadIrregularity);
+//                    realm.commitTransaction();
 
                 }
 
