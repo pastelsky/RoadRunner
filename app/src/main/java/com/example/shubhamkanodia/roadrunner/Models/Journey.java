@@ -136,5 +136,4 @@ public class Journey extends RealmObject {
         this.volunteerEmail = volunteerEmail;
     }
 
-
 }

@@ -316,7 +316,6 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
                     realm.beginTransaction();
                     RoadIrregularity roadIrregularity = new RoadIrregularity(intensity, curLat, curLong, new Date());
-
                     RoadIrregularity toSave = realm.copyToRealm(roadIrregularity);
 
                     realm.commitTransaction();

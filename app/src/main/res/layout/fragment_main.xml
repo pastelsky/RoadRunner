@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:background="@"
+        android:background="@drawable/ripple"
         android:backgroundTint="#1c2b38"
         android:drawableLeft="@drawable/ic_record_inactive"
         android:padding="22dp"
@@ -33,13 +33,13 @@
         android:textSize="16sp"
         android:textStyle="bold" />
 
-
     <View
         android:id="@+id/vDummy"
         android:layout_width="100dp"
         android:layout_height="50dp"
         android:layout_below="@id/tvWhat"
         android:background="#00000000"/>
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
