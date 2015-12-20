@@ -7,7 +7,6 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
 
 import com.example.shubhamkanodia.roadrunner.R;
 import com.example.shubhamkanodia.roadrunner.SampleFragmentPagerAdapter;
@@ -68,7 +67,6 @@ public void changeFragment(){
 //        }
 
         if (id == R.id.action_settings) {
-            Toast.makeText(this, "sddsdds", Toast.LENGTH_SHORT).show();
 
             Intent serviceIntent = new Intent(this, SettingsActivity.class);
             startActivity(serviceIntent);

@@ -35,6 +35,8 @@ public class GPSPermissionDialog extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface paramDialogInterface, int paramInt) {
 
+                finish();
+
             }
         });
 

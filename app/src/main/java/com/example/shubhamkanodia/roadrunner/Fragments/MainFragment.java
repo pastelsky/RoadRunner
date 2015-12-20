@@ -1,31 +1,22 @@
 package com.example.shubhamkanodia.roadrunner.Fragments;
 
-import android.app.ActivityManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.location.LocationManager;
 import android.os.Bundle;
-import android.os.SystemClock;
-import android.provider.Settings;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 
 import com.example.shubhamkanodia.roadrunner.Activities.AboutActivity;
-import com.example.shubhamkanodia.roadrunner.Events.ServiceStopEvent;
 import com.example.shubhamkanodia.roadrunner.R;
 import com.example.shubhamkanodia.roadrunner.Services.DataLoggerService;
 
@@ -39,7 +30,6 @@ import org.achartengine.renderer.XYSeriesRenderer;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import de.greenrobot.event.EventBus;
 import uk.co.deanwild.materialshowcaseview.MaterialShowcaseView;
 
 // In this case, the fragment displays simple text based on the page
@@ -47,6 +37,7 @@ public class MainFragment extends Fragment implements SensorEventListener {
 
     @Bind(R.id.vDummy)
     View vDummy;
+    XYMultipleSeriesDataset multipleSeriesDataset;
     private Chronometer chronometer;
     private Button bRecord;
     private LinearLayout lvChart;
@@ -58,7 +49,6 @@ public class MainFragment extends Fragment implements SensorEventListener {
     private SensorManager senSensorManager;
     private Sensor senAccelerometer;
     private long lastUpdate = 0;
-    private boolean isRecodring = false;
 
     public static MainFragment newInstance() {
         Bundle args = new Bundle();
@@ -76,7 +66,6 @@ public class MainFragment extends Fragment implements SensorEventListener {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_main, container, false);
 
-        EventBus.getDefault().register(this);
         ButterKnife.bind(this, view);
 
 
@@ -93,13 +82,126 @@ public class MainFragment extends Fragment implements SensorEventListener {
                 .singleUse("show_showcase1") // provide a unique ID used to ensure it is only shown once
                 .show();
 
+        prepareChart();
+
+        chartView = ChartFactory.getCubeLineChartView(getActivity(), multipleSeriesDataset, mRenderer, 0.4f);
+        lvChart.addView(chartView);
+
+        senSensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
+        senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+
+        return view;
+    }
+
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        senSensorManager.unregisterListener(this);
+
+
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        senSensorManager.unregisterListener(this);
+
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent sensorEvent) {
+        Sensor mySensor = sensorEvent.sensor;
+
+        if (mySensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+
+            float x = sensorEvent.values[0];
+            float y = sensorEvent.values[1];
+            float z = sensorEvent.values[2];
+
+            long curTime = System.currentTimeMillis();
+
+            if ((curTime - lastUpdate) > 80) {
+                long diffTime = (curTime - lastUpdate);
+                lastUpdate = curTime;
+
+                Xseries.add(System.currentTimeMillis(), Math.abs(x));
+                Yseries.add(System.currentTimeMillis(), Math.abs(y));
+                Zseries.add(System.currentTimeMillis(), Math.abs(z));
+                mRenderer.setXAxisMin(System.currentTimeMillis() - 350);
+                chartView.repaint();
+
+
+            }
+        }
+    }
+//
+//    public void startRecorderService() {
+//
+//        bRecord.setBackgroundColor(Color.RED);
+//        bRecord.setText("Recording data...");
+//        bRecord.setTextColor(Color.RED);
+//        bRecord.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_record, 0, 0, 0);
+//        chronometer.setBase(SystemClock.elapsedRealtime());
+//        chronometer.start();
+//
+//
+//        Intent intent = new Intent(getActivity().getApplicationContext(), DataLoggerService.class);
+//
+//        if (!isMyServiceRunning(DataLoggerService.class))
+//            getActivity().startService(intent);
+//
+//    }
+//
+//    public void endRecorderService() {
+//
+//        bRecord.setBackgroundColor(Color.parseColor("#1c2b38"));
+//        bRecord.setTextColor(0x88ffffff);
+//        bRecord.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_record_inactive, 0, 0, 0);
+//        chronometer.stop();
+//
+//        bRecord.setText("Start Data Collection");
+//        Intent intent = new Intent(getActivity().getApplicationContext(), DataLoggerService.class);
+//        getActivity().stopService(intent);
+//
+//    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {
+
+    }
+
+    @OnClick(R.id.tvWhat)
+    public void clickWhat(View view) {
+        startActivity(new Intent(getContext(), AboutActivity.class));
+    }
+
+    @OnClick(R.id.bRecord)
+    public void toggleRecorder(View v) {
+        Button toggleButton = (Button) v;
+
+        if (DataLoggerService.wasStartedSuccessfully)
+            getActivity().startService(new Intent(getActivity(), DataLoggerService.class));
+        else
+            getActivity().stopService(new Intent(getActivity(), DataLoggerService.class));
+    }
+
+    public void prepareChart() {
 
         Xseries = new XYSeries("X Axis");
         Yseries = new XYSeries("Y Axis");
         Zseries = new XYSeries("Z Axis");
 
 
-        XYMultipleSeriesDataset multipleSeriesDataset = new XYMultipleSeriesDataset();
+        multipleSeriesDataset = new XYMultipleSeriesDataset();
         multipleSeriesDataset.addSeries(0, Xseries);
         multipleSeriesDataset.addSeries(1, Yseries);
         multipleSeriesDataset.addSeries(2, Zseries);
@@ -146,196 +248,6 @@ public class MainFragment extends Fragment implements SensorEventListener {
         mRenderer.setZoomEnabled(false, false);
         mRenderer.setShowGrid(false); // we show the grid
 
-        chartView = ChartFactory.getCubeLineChartView(getActivity(), multipleSeriesDataset, mRenderer, 0.4f);
-        lvChart.addView(chartView);
 
-
-        bRecord.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                if (!isRecodring) {
-
-                    LocationManager lm = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-                    boolean gps_enabled = false;
-
-                    try {
-                        gps_enabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
-                    } catch (Exception ex) {
-                    }
-
-
-                    if (!gps_enabled) {
-                        // notify user
-                        AlertDialog.Builder dialog = new AlertDialog.Builder(getActivity());
-                        dialog.setMessage("We need your GPS data to be recorded too!")
-                                .setIcon(R.drawable.ic_location)
-                                .setTitle("Please enable Location")
-                                .setPositiveButton("Turn On GPS", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-
-                                        Intent myIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                                        getActivity().startActivity(myIntent);
-                                    }
-                                })
-                                .setNegativeButton("Not Now", new DialogInterface.OnClickListener() {
-
-                                    @Override
-                                    public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-
-                                    }
-                                });
-
-                        AlertDialog ad = dialog.create();
-                        ad.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
-
-                    } else {
-                        startRecorderService();
-                        Toast.makeText(getActivity(), "Recording data in background. Stop Recording from notification bar when done.", Toast.LENGTH_LONG).show();
-                        Intent startMain = new Intent(Intent.ACTION_MAIN);
-                        startMain.addCategory(Intent.CATEGORY_HOME);
-                        startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(startMain);
-
-
-                    }
-                    //gps on
-
-
-                }// if not recording
-                else {
-                    endRecorderService();
-
-                }
-            }
-
-        });
-
-        senSensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
-        senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
-
-        return view;
-    }
-//    @Override
-//    public void onPause(){
-//        super.onPause();
-//
-//        senSensorManager.unregisterListener(this);
-//    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        senSensorManager.unregisterListener(this);
-
-
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        senSensorManager.unregisterListener(this);
-
-    }
-
-    public void onEvent(ServiceStopEvent event) {
-        endRecorderService();
-
-    }
-
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-
-
-        if (isMyServiceRunning(DataLoggerService.class))
-            startRecorderService();
-        else
-            endRecorderService();
-
-    }
-
-    @Override
-    public void onSensorChanged(SensorEvent sensorEvent) {
-        Sensor mySensor = sensorEvent.sensor;
-
-        if (mySensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-
-            float x = sensorEvent.values[0];
-            float y = sensorEvent.values[1];
-            float z = sensorEvent.values[2];
-
-            long curTime = System.currentTimeMillis();
-
-            if ((curTime - lastUpdate) > 80) {
-                long diffTime = (curTime - lastUpdate);
-                lastUpdate = curTime;
-
-                Xseries.add(System.currentTimeMillis(), Math.abs(x));
-                Yseries.add(System.currentTimeMillis(), Math.abs(y));
-                Zseries.add(System.currentTimeMillis(), Math.abs(z));
-                mRenderer.setXAxisMin(System.currentTimeMillis() - 350);
-                chartView.repaint();
-
-
-            }
-        }
-    }
-
-    public void startRecorderService() {
-
-        bRecord.setBackgroundColor(Color.RED);
-        bRecord.setText("Recording data...");
-        bRecord.setTextColor(Color.RED);
-        bRecord.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_record, 0, 0, 0);
-        chronometer.setBase(SystemClock.elapsedRealtime());
-        chronometer.start();
-
-
-        Intent intent = new Intent(getActivity().getApplicationContext(), DataLoggerService.class);
-
-        if (!isMyServiceRunning(DataLoggerService.class))
-            getActivity().startService(intent);
-        isRecodring = true;
-
-    }
-
-    public void endRecorderService() {
-
-        isRecodring = false;
-
-        bRecord.setBackgroundColor(Color.parseColor("#1c2b38"));
-        bRecord.setTextColor(0x88ffffff);
-        bRecord.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_record_inactive, 0, 0, 0);
-        chronometer.stop();
-
-        bRecord.setText("Start Data Collection");
-        Intent intent = new Intent(getActivity().getApplicationContext(), DataLoggerService.class);
-        getActivity().stopService(intent);
-
-    }
-
-    private boolean isMyServiceRunning(Class<?> serviceClass) {
-        ActivityManager manager = (ActivityManager) getActivity().getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (serviceClass.getName().equals(service.service.getClassName())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int i) {
-
-    }
-
-    @OnClick(R.id.tvWhat)
-    public void clickWhat(View view) {
-        startActivity(new Intent(getContext(), AboutActivity.class));
     }
 }

@@ -33,15 +33,18 @@ import android.widget.RemoteViews;
 import android.widget.Toast;
 
 import com.example.shubhamkanodia.roadrunner.Activities.GPSPermissionDialog;
-import com.example.shubhamkanodia.roadrunner.Activities.MainActivity;
-import com.example.shubhamkanodia.roadrunner.Activities.PostActivity;
 import com.example.shubhamkanodia.roadrunner.Activities.RunnerWidget;
 import com.example.shubhamkanodia.roadrunner.Events.ServiceStopEvent;
+import com.example.shubhamkanodia.roadrunner.Helpers.Constants;
 import com.example.shubhamkanodia.roadrunner.Helpers.Helper;
 import com.example.shubhamkanodia.roadrunner.Helpers.XYZProcessor;
+import com.example.shubhamkanodia.roadrunner.Models.Journey;
+import com.example.shubhamkanodia.roadrunner.Models.RoadIrregularity;
 import com.example.shubhamkanodia.roadrunner.R;
+import com.parse.ParseInstallation;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 import de.greenrobot.event.EventBus;
 import io.realm.Realm;
@@ -53,21 +56,14 @@ import io.realm.Realm;
 
 public class DataLoggerService extends Service implements SensorEventListener {
 
-
-    private static final double THRESHOLD_ACCELERATION = 13;
-    private static final int SLIDING_WINDOW_CAPACITY = 5;
-    private static final int notif_id = 1;
-    private static final int MINIMUM_RECORD_TIME = 5000;
     public static boolean wasStartedSuccessfully = false;
-
     protected BroadcastReceiver stopServiceReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             destroyService();
         }
     };
-
-
+    String HARDCODED_EMAIL = "abc@example.com";
     double curLat, curLong;
     double initLat = 0, initLong = 0;
     long lastUpdate = 0;
@@ -82,7 +78,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
     ArrayList<Double> slidingWindow;
 
-    long startTime;
+    Date startTime;
     boolean requireMovement;
     Realm realm;
 
@@ -121,7 +117,9 @@ public class DataLoggerService extends Service implements SensorEventListener {
                 .addAction(R.drawable.ic_stop,
                         "Stop Recording", contentIntent).build();
 
-        startForeground(notif_id, notification);
+        startForeground(Constants.RECORD_NOTIF_ID, notification);
+        Toast.makeText(this, "Recording data in background. Stop recording from notification bar when done.", Toast.LENGTH_LONG).show();
+
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
@@ -202,37 +200,47 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
         if (wasStartedSuccessfully) {
 
-            long totTime = (System.currentTimeMillis() - startTime) / 1000;
+            Date endTime = new Date();
 
-            Intent m = new Intent(this, MainActivity.class);
-            m.setAction(Intent.ACTION_MAIN);
-            m.addCategory(Intent.CATEGORY_LAUNCHER);
-            m.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
+            long totalJourneyTime = (startTime.getTime() - endTime.getTime()) / 1000;
 
 
-            if (totTime < MINIMUM_RECORD_TIME) {
-                Toast.makeText(this, "Data set too small. Try recording for a longer time!", Toast.LENGTH_SHORT).show();
-                startActivity(m);
+            Journey newJourney = new Journey(initLat, curLat, initLong, curLong,
+                    startTime, endTime, ParseInstallation.getCurrentInstallation().getInstallationId(), HARDCODED_EMAIL);
 
-            } else if (requireMovement && (curLat == 0 || curLong == 0)) {
-                Toast.makeText(this, "Did not detect any geographical movement. Move it!", Toast.LENGTH_SHORT).show();
-                startActivity(m);
-            } else {
-                Intent resultIntent = new Intent(this, PostActivity.class);
+            realm.beginTransaction();
+            Journey journeyToSave = realm.copyToRealm(newJourney);
+            realm.commitTransaction();
 
-                resultIntent.setAction(Intent.ACTION_MAIN);
-                resultIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-                resultIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
-
-                resultIntent.putExtra("start_time", startTime);
-                resultIntent.putExtra("end_time", System.currentTimeMillis());
-                resultIntent.putExtra("start_lat", initLat);
-                resultIntent.putExtra("end_lat", curLat);
-                resultIntent.putExtra("start_long", initLong);
-                resultIntent.putExtra("end_long", curLong);
-
-                startActivity(resultIntent);
-            }
+//            Intent m = new Intent(this, MainActivity.class);
+//            m.setAction(Intent.ACTION_MAIN);
+//            m.addCategory(Intent.CATEGORY_LAUNCHER);
+//            m.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
+//
+//
+//            if (totTime < MINIMUM_RECORD_TIME) {
+//                Toast.makeText(this, "Data set too small. Try recording for a longer time!", Toast.LENGTH_SHORT).show();
+//                startActivity(m);
+//
+//            } else if (requireMovement && (curLat == 0 || curLong == 0)) {
+//                Toast.makeText(this, "Did not detect any geographical movement. Move it!", Toast.LENGTH_SHORT).show();
+//                startActivity(m);
+//            } else {
+//                Intent resultIntent = new Intent(this, PostActivity.class);
+//
+//                resultIntent.setAction(Intent.ACTION_MAIN);
+//                resultIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+//                resultIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
+//
+//                resultIntent.putExtra("start_time", startTime);
+//                resultIntent.putExtra("end_time", System.currentTimeMillis());
+//                resultIntent.putExtra("start_lat", initLat);
+//                resultIntent.putExtra("end_lat", curLat);
+//                resultIntent.putExtra("start_long", initLong);
+//                resultIntent.putExtra("end_long", curLong);
+//
+//                startActivity(resultIntent);
+//            }
 
             wasStartedSuccessfully = false;
 
@@ -270,7 +278,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
         registerReceiver(stopServiceReceiver, new IntentFilter("myFilter"));
 
 
-        startTime = System.currentTimeMillis();
+        startTime = new Date();
         slidingWindow = new ArrayList<Double>();
 
         updateWidgetStatus(true);
@@ -295,15 +303,23 @@ public class DataLoggerService extends Service implements SensorEventListener {
             if ((curTime - lastUpdate) > 80) {
                 lastUpdate = curTime;
 
-                if (slidingWindow.size() >= SLIDING_WINDOW_CAPACITY) {
+                if (slidingWindow.size() >= Constants.SLIDING_WINDOW_CAPACITY) {
                     Log.e("STDEV: ", "STDEV: " + Helper.stdev(slidingWindow));
                     slidingWindow.clear();
                 }
                 slidingWindow.add(processor.normalizedValue);
 
 
-                if (processor.normalizedValue > THRESHOLD_ACCELERATION) {
-                    vibrator.vibrate(50);
+                if (processor.normalizedValue > RoadIrregularity.THRESHOLD_VIBRATION) {
+
+                    int intensity = RoadIrregularity.getIntensityLevel(processor.normalizedValue);
+
+                    realm.beginTransaction();
+                    RoadIrregularity roadIrregularity = new RoadIrregularity(intensity, curLat, curLong, new Date());
+
+                    RoadIrregularity toSave = realm.copyToRealm(roadIrregularity);
+
+                    realm.commitTransaction();
 
                 }
 

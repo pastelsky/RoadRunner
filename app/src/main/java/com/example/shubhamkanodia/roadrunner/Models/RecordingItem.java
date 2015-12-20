@@ -4,10 +4,12 @@ import android.text.format.DateUtils;
 
 import com.example.shubhamkanodia.roadrunner.Helpers.Haversine;
 
+import io.realm.RealmObject;
+
 /**
  * Created by shubhamkanodia on 04/09/15.
  */
-public class RecordingItem {
+public class RecordingItem extends RealmObject {
 
     public long start_time;
     public  long end_time;
@@ -16,30 +18,15 @@ public class RecordingItem {
     public boolean isSynced;
     public boolean isSyncing;
 
-
     public double start_lat;
     public double start_long;
 
 
-
     public String from_address;
     public String to_address;
-
-    public String getFrom_address() {
-        return from_address;
-    }
-
-    public void setFrom_address(String from_address) {
-        this.from_address = from_address;
-    }
-
-    public String getTo_address() {
-        return to_address;
-    }
-
-    public void setTo_address(String to_address) {
-        this.to_address = to_address;
-    }
+    private double end_lat;
+    private double end_long;
+    private int upload_progress;
 
     public RecordingItem(RecordRow recordRow){
 
@@ -74,12 +61,21 @@ public class RecordingItem {
         this.from_address = from_address;
     }
 
-    private double end_lat;
-    private double end_long;
+    public String getFrom_address() {
+        return from_address;
+    }
 
-    private int upload_progress;
+    public void setFrom_address(String from_address) {
+        this.from_address = from_address;
+    }
 
+    public String getTo_address() {
+        return to_address;
+    }
 
+    public void setTo_address(String to_address) {
+        this.to_address = to_address;
+    }
 
     public String getEnd_time() {
         return DateUtils.getRelativeTimeSpanString(end_time).toString();
