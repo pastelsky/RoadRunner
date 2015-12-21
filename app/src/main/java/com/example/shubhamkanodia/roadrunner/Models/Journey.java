@@ -1,11 +1,12 @@
 package com.example.shubhamkanodia.roadrunner.Models;
 
 import com.parse.ParseGeoPoint;
-import com.parse.ParseInstallation;
 import com.parse.ParseObject;
 
+import java.util.ArrayList;
 import java.util.Date;
 
+import io.realm.RealmList;
 import io.realm.RealmObject;
 
 /**
@@ -23,11 +24,12 @@ public class Journey extends RealmObject {
     private Date startTime;
     private Date endTime;
 
-    private String volunteerIdentity;
-    private String volunteerEmail;
+    private String volunteerIdentity = "kaw kaw kaw";
+    private String volunteerEmail = "shubhambobo@noob.com";
 
 
     private boolean isSynced;
+    private RealmList<RoadIrregularity> roadIrregularityRealmList;
 
     public Journey() {
     }
@@ -41,29 +43,38 @@ public class Journey extends RealmObject {
         this.endLong = endLong;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.volunteerIdentity = volunteerIdentity;
         this.volunteerEmail = volunteerEmail;
         this.isSynced = false;
-
+        this.roadIrregularityRealmList = new RealmList<>();
     }
 
     public static ParseObject convertToParseObject(Journey j) {
 
-        ParseObject p = new ParseObject("Journeys");
-
-        ParseGeoPoint pgpStart = new ParseGeoPoint(j.getStartLat(), j.getStartLong());
-        ParseGeoPoint pgpEnd = new ParseGeoPoint(j.getEndLat(), j.getEndLong());
+        ParseObject p = new ParseObject("Journies");
 
 
-        p.add("startPoint", pgpStart);
-        p.add("endPoint", pgpEnd);
+//        ParseGeoPoint start = new ParseGeoPoint(j.getStartLat(), j.getStartLong());
+//        ParseGeoPoint end = new ParseGeoPoint(j.getEndLat(), j.getEndLong());
+//
+//        p.put("startGeoPoint", start);
+//        p.put("endGeoPoint", end);
 
-        p.add("startTime", j.getStartTime());
-        p.add("endTime", j.getEndTime());
+        p.put("startLat", j.getStartLat());
+        p.put("startLong", j.getStartLong());
 
-        p.add("volunteerEmail", j.volunteerEmail);
+        p.put("endLat", j.getEndLat());
+        p.put("endLong", j.getEndLong());
 
-        ParseInstallation pins = ParseInstallation.getCurrentInstallation();
-        p.add("volunteerIdentity", pins);
+        p.put("startTime", j.getStartTime());
+        p.put("endTime", j.getEndTime());
+
+        p.put("volunteerEmail", j.volunteerEmail);
+        p.put("volunteerIdentity", j.volunteerIdentity);
+
+
+          //p.add();
+//        p.addAll("irregularity", j.getroadIrregularityRealmList());
 
         return p;
     }
@@ -140,4 +151,11 @@ public class Journey extends RealmObject {
         this.volunteerEmail = volunteerEmail;
     }
 
+    public void setroadIrregularityRealmList(RealmList<RoadIrregularity> r) {
+        this.roadIrregularityRealmList.addAll(r);
+    }
+
+    public RealmList<RoadIrregularity> getroadIrregularityRealmList() {
+        return this.roadIrregularityRealmList;
+    }
 }
