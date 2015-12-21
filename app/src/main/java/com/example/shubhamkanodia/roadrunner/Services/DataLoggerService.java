@@ -36,18 +36,17 @@ import com.example.shubhamkanodia.roadrunner.Activities.GPSPermissionDialog;
 import com.example.shubhamkanodia.roadrunner.Activities.RunnerWidget;
 import com.example.shubhamkanodia.roadrunner.Events.ServiceStopEvent;
 import com.example.shubhamkanodia.roadrunner.Helpers.Constants;
+import com.example.shubhamkanodia.roadrunner.Helpers.Haversine;
 import com.example.shubhamkanodia.roadrunner.Helpers.Helper;
 import com.example.shubhamkanodia.roadrunner.Helpers.XYZProcessor;
 import com.example.shubhamkanodia.roadrunner.Models.Journey;
 import com.example.shubhamkanodia.roadrunner.Models.RoadIrregularity;
 import com.example.shubhamkanodia.roadrunner.R;
-import com.parse.ParseObject;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import de.greenrobot.event.EventBus;
 import io.realm.Realm;
@@ -71,8 +70,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
     double curLat, curLong;
     double initLat = 0, initLong = 0;
     long lastUpdate = 0;
-
-    double backoffTime = Constants.MINIMUM_MOVEMENT_INTERVAL;
+    double checkLat = 0, checkLong = 0;
 
     LocationManager mlocManager;
     LocationListener locationListener;
@@ -88,7 +86,8 @@ public class DataLoggerService extends Service implements SensorEventListener {
     Realm realm;
     RealmList<RoadIrregularity> roadIrregularityRealmList;
 
-    List<ParseObject> pj = new ArrayList<ParseObject>();
+    Timer noMovementTimer;
+
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -111,9 +110,6 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
         }
 
-        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-        executor.scheduleAtFixedRate()
-
 
         PendingIntent contentIntent = PendingIntent.getBroadcast(this, 0, new Intent("myFilter"), PendingIntent.FLAG_CANCEL_CURRENT);
 
@@ -133,6 +129,8 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
         startForeground(Constants.RECORD_NOTIF_ID, notification);
 
+        startListeningForNoMovement();
+
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
@@ -144,11 +142,13 @@ public class DataLoggerService extends Service implements SensorEventListener {
                 if (initLat == 0 || initLong == 0) {
                     initLat = location.getLatitude();
                     initLong = location.getLongitude();
+                    checkLat = location.getLatitude();
+                    checkLong = location.getLongitude();
                 }
 
                 curLat = location.getLatitude();
                 curLong = location.getLongitude();
-                Toast.makeText(getApplicationContext(), "location changed", Toast.LENGTH_SHORT).show();
+                Log.e("GPS", "MOVING:" + curLat + ":" + curLong);
 
             }
 
@@ -172,6 +172,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
         };
 
         mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+
         senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
 
         mlocManager.addGpsStatusListener(new android.location.GpsStatus.Listener() {
@@ -186,6 +187,18 @@ public class DataLoggerService extends Service implements SensorEventListener {
         Log.e("MAX_ACCL_RANGE", "RANGE: " + senAccelerometer.getMaximumRange() + "\nResolution: " + senAccelerometer.getResolution() + "\nDelays: " + senAccelerometer.getMinDelay() + " - " + senAccelerometer.getMinDelay());
 
         return START_STICKY;
+    }
+
+    private void startListeningForNoMovement() {
+
+        noMovementTimer = new Timer();
+        noMovementTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                Log.e("TIMER", "Checking for movement in last 5 seconds = " + Haversine.haversine(checkLat, checkLong, curLat, curLong) * 1000);
+            }
+        }, Constants.MOVEMENT_CHECK_INITIAL_DELAY * 1000, Constants.MOVEMENT_CHECK_INTERVAL * 1000);//put here time 1000 milliseconds=1 second
+
     }
 
     @Override
@@ -224,6 +237,8 @@ public class DataLoggerService extends Service implements SensorEventListener {
             newJourney.setroadIrregularityRealmList(roadIrregularityRealmList);
             realm.copyToRealm(newJourney);
             realm.commitTransaction();
+
+            //TODO:Dont start service here, only in reviever!
             startService(new Intent(DataLoggerService.this, UploadService.class));
 //            Journey.convertToParseObject(newJourney);
 //            ParseObject.saveAllInBackground(pj);
@@ -297,8 +312,14 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
         }
 
+        Toast.makeText(this, "LISTENERS STOPPING", Toast.LENGTH_SHORT).show();
+
+
+
         mlocManager.removeUpdates(locationListener);
         senSensorManager.unregisterListener(this);
+        if (noMovementTimer != null)
+            noMovementTimer.cancel();
 
     }
 
@@ -343,12 +364,12 @@ public class DataLoggerService extends Service implements SensorEventListener {
                     Log.e("STDEV: ", "LEVEL:  " + Helper.stdev(slidingWindow));
 
                     double stddev = Helper.stdev(slidingWindow);
+
                     if (stddev > RoadIrregularity.THRESHOLD_VIBRATION) {
 
-                        int intensity = RoadIrregularity.getIntensityLevel(Helper.stdev(slidingWindow));
+                        int intensity = RoadIrregularity.getIntensityLevel(stddev);
                         Log.e("STDEV: ", "LEVEL:  " + intensity);
                         Toast.makeText(this, "LEVEL: " + intensity, Toast.LENGTH_SHORT).show();
-
 
                         realm.beginTransaction();
 
@@ -357,31 +378,14 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
                         realm.commitTransaction();
 
-                        pj.add(RoadIrregularity.convertToParseObject(roadIrregularity));
+                        roadIrregularityRealmList.add(roadIrregularity);
+
                     }
 
                     slidingWindow.clear();
 
                 }
                 slidingWindow.add(processor.normalizedValue);
-
-
-                Log.e("prcoessor", "" + processor.normalizedValue);
-
-                //This part is faked. Case of pothole detected. You said u have made changes, considering only stdev.
-                if (processor.normalizedValue - 5 > RoadIrregularity.THRESHOLD_VERY_HIGH) {
-                    int intensity = RoadIrregularity.getIntensityLevel(processor.normalizedValue);
-
-                    RoadIrregularity roadIrregularity = new RoadIrregularity(intensity, curLat, curLong, new Date());
-
-                    roadIrregularityRealmList.add(roadIrregularity);
-                    Log.e("adding irregularity", String.valueOf(roadIrregularity.getLatitude()) + String.valueOf(roadIrregularity.getLongitude()));
-
-
-//                    RoadIrregularity toSave = realm.copyToRealm(roadIrregularity);
-//                    realm.commitTransaction();
-
-                }
 
             }
         }

@@ -1,5 +1,6 @@
 package com.example.shubhamkanodia.roadrunner.Models;
 
+import com.parse.ParseGeoPoint;
 import com.parse.ParseObject;
 
 import java.util.Date;
@@ -65,10 +66,10 @@ public class RoadIrregularity extends RealmObject {
 
         ParseObject p = new ParseObject("RoadIrregularities");
 
-        p.add("latitude", r.getLatitude());
-        p.add("longitude", r.getLongitude());
-        p.add("timeRecorded", r.getTimeRecorded());
-        p.add("intensity", r.getIntensity());
+        ParseGeoPoint pgp = new ParseGeoPoint(r.getLatitude(), r.getLongitude());
+        p.put("point", pgp);
+        p.put("timeRecorded", r.getTimeRecorded());
+        p.put("intensity", r.getIntensity());
 
         return p;
     }

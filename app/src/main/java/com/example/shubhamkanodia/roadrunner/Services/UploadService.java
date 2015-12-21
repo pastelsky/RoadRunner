@@ -3,40 +3,21 @@ package com.example.shubhamkanodia.roadrunner.Services;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
-import android.os.Environment;
 import android.os.IBinder;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
-import android.widget.Toast;
 
-import com.example.shubhamkanodia.roadrunner.Events.UploadChangeEvent;
-import com.example.shubhamkanodia.roadrunner.Helpers.Helper;
 import com.example.shubhamkanodia.roadrunner.Models.Journey;
-import com.example.shubhamkanodia.roadrunner.Models.RecordRow;
 import com.example.shubhamkanodia.roadrunner.Models.RoadIrregularity;
-import com.example.shubhamkanodia.roadrunner.Models.SensorRecorder;
 import com.example.shubhamkanodia.roadrunner.R;
 import com.parse.ParseException;
-import com.parse.ParseFile;
 import com.parse.ParseObject;
 import com.parse.SaveCallback;
 
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import de.greenrobot.event.EventBus;
 import io.realm.Realm;
-import io.realm.RealmQuery;
 import io.realm.RealmResults;
 
 public class UploadService extends Service {
@@ -74,14 +55,7 @@ public class UploadService extends Service {
 
         realm = Realm.getInstance(this);
 
-
-//        if (intent.getBooleanExtra("upload_bulk", false))
-//            uploadAll();
-//        else {
-//
-//
-//            recordingStartTime = intent.getLongExtra("start_time", 0);
-//            Log.e("Time: ", intent.getExtras() + "");
+        Log.e("Time: ", intent.getExtras() + "");
 
 
         mNotifyManager =
@@ -95,7 +69,6 @@ public class UploadService extends Service {
         startForeground(2,
                 mBuilder.build());
 
-//        RealmQuery<RecordRow> rq = realm.where(RecordRow.class);
         RealmResults<Journey> journeyRealmResults = realm.where(Journey.class)
                 .equalTo("isSynced", false)
                 .findAll();
@@ -113,7 +86,7 @@ public class UploadService extends Service {
             for (RoadIrregularity r : j.getroadIrregularityRealmList()) {
                 ParseObject pr = RoadIrregularity.convertToParseObject(r);
                 pr.saveInBackground();
-                p.add("irre", pr);
+                p.add("irregularityList", pr);
             }
 
             p.saveInBackground(new SaveCallback() {

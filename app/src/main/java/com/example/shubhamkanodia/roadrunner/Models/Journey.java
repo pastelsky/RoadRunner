@@ -1,9 +1,8 @@
 package com.example.shubhamkanodia.roadrunner.Models;
 
-import com.parse.ParseGeoPoint;
+import com.parse.ParseInstallation;
 import com.parse.ParseObject;
 
-import java.util.ArrayList;
 import java.util.Date;
 
 import io.realm.RealmList;
@@ -24,8 +23,8 @@ public class Journey extends RealmObject {
     private Date startTime;
     private Date endTime;
 
-    private String volunteerIdentity = "kaw kaw kaw";
-    private String volunteerEmail = "shubhambobo@noob.com";
+    private String volunteerIdentity;
+    private String volunteerEmail;
 
 
     private boolean isSynced;
@@ -43,7 +42,6 @@ public class Journey extends RealmObject {
         this.endLong = endLong;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.volunteerIdentity = volunteerIdentity;
         this.volunteerEmail = volunteerEmail;
         this.isSynced = false;
         this.roadIrregularityRealmList = new RealmList<>();
@@ -51,14 +49,7 @@ public class Journey extends RealmObject {
 
     public static ParseObject convertToParseObject(Journey j) {
 
-        ParseObject p = new ParseObject("Journies");
-
-
-//        ParseGeoPoint start = new ParseGeoPoint(j.getStartLat(), j.getStartLong());
-//        ParseGeoPoint end = new ParseGeoPoint(j.getEndLat(), j.getEndLong());
-//
-//        p.put("startGeoPoint", start);
-//        p.put("endGeoPoint", end);
+        ParseObject p = new ParseObject("Journeys");
 
         p.put("startLat", j.getStartLat());
         p.put("startLong", j.getStartLong());
@@ -69,12 +60,8 @@ public class Journey extends RealmObject {
         p.put("startTime", j.getStartTime());
         p.put("endTime", j.getEndTime());
 
-        p.put("volunteerEmail", j.volunteerEmail);
-        p.put("volunteerIdentity", j.volunteerIdentity);
-
-
-          //p.add();
-//        p.addAll("irregularity", j.getroadIrregularityRealmList());
+        p.put("volunteerEmail", j.getVolunteerEmail());
+        p.put("volunteerIdentity", ParseInstallation.getCurrentInstallation());
 
         return p;
     }

@@ -13,5 +13,6 @@ public class Constants {
 
 
     //Sleep timers
-    public static final int MINIMUM_MOVEMENT_INTERVAL = 5;
+    public static final int MOVEMENT_CHECK_INTERVAL = 5;
+    public static final int MOVEMENT_CHECK_INITIAL_DELAY = 10;
 }
