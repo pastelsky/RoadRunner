@@ -46,6 +46,8 @@ import com.parse.ParseObject;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import de.greenrobot.event.EventBus;
 import io.realm.Realm;
@@ -68,6 +70,8 @@ public class DataLoggerService extends Service implements SensorEventListener {
     double curLat, curLong;
     double initLat = 0, initLong = 0;
     long lastUpdate = 0;
+
+    double backoffTime = Constants.MINIMUM_MOVEMENT_INTERVAL;
 
     LocationManager mlocManager;
     LocationListener locationListener;
@@ -103,6 +107,10 @@ public class DataLoggerService extends Service implements SensorEventListener {
             Toast.makeText(this, "Recording data in background. Stop recording from notification bar when done.", Toast.LENGTH_LONG).show();
 
         }
+
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+        executor.scheduleAtFixedRate()
+
 
         PendingIntent contentIntent = PendingIntent.getBroadcast(this, 0, new Intent("myFilter"), PendingIntent.FLAG_CANCEL_CURRENT);
 
@@ -192,13 +200,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
         EventBus.getDefault().post(new ServiceStopEvent());
         updateWidgetStatus(false);
 
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-        }
-
-        mlocManager.removeUpdates(locationListener);
-        senSensorManager.unregisterListener(this);
+        unregisterListenerers();
 
         if (wasStartedSuccessfully) {
 
@@ -279,6 +281,18 @@ public class DataLoggerService extends Service implements SensorEventListener {
         }
     }
 
+
+    public void unregisterListenerers() {
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+        }
+
+        mlocManager.removeUpdates(locationListener);
+        senSensorManager.unregisterListener(this);
+
+    }
+
     public void initService() {
         realm = Realm.getInstance(this);
         SharedPreferences sharedPrefs = PreferenceManager
@@ -317,11 +331,15 @@ public class DataLoggerService extends Service implements SensorEventListener {
                 lastUpdate = curTime;
 
                 if (slidingWindow.size() >= Constants.SLIDING_WINDOW_CAPACITY) {
-                    Log.e("STDEV: ", "STDEV: " + Helper.stdev(slidingWindow));
+                    Log.e("STDEV: ", "LEVEL:  " + Helper.stdev(slidingWindow));
 
-                    if (Helper.stdev(slidingWindow) > RoadIrregularity.THRESHOLD_VIBRATION) {
+                    double stddev = Helper.stdev(slidingWindow);
+                    if (stddev > RoadIrregularity.THRESHOLD_VIBRATION) {
 
-                        int intensity = RoadIrregularity.getIntensityLevel(processor.normalizedValue);
+                        int intensity = RoadIrregularity.getIntensityLevel(Helper.stdev(slidingWindow));
+                        Log.e("STDEV: ", "LEVEL:  " + intensity);
+                        Toast.makeText(this, "LEVEL: " + intensity, Toast.LENGTH_SHORT).show();
+
 
                         realm.beginTransaction();
 

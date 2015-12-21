@@ -78,7 +78,7 @@
         </activity>
 
         <receiver
-            android:name=".Activities.WifiConnectedReceiver"
+            android:name="com.example.shubhamkanodia.roadrunner.WifiConnectedReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>

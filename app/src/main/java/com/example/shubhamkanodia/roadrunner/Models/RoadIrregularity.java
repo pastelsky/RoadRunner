@@ -11,14 +11,13 @@ import io.realm.RealmObject;
  */
 public class RoadIrregularity extends RealmObject {
 
-    public static final double THRESHOLD_VIBRATION = 2.5f;
-    public static final double THRESHOLD_LOW = 4f;
-    public static final double THRESHOLD_MEDIUM = 6f;
-    public static final double THRESHOLD_HIGH = 7.5f;
-    public static final double THRESHOLD_VERY_HIGH = 9f;
+    public static final double THRESHOLD_VIBRATION = 2.3f;
+    public static final double THRESHOLD_LOW = 3.3f;
+    public static final double THRESHOLD_MEDIUM = 4.5f;
+    public static final double THRESHOLD_HIGH = 6f;
+    public static final double THRESHOLD_VERY_HIGH = 7.5f;
 
     //Constants
-    public static final int LEVEL_VIBRATION = 0;
     public static final int LEVEL_LOW = 1;
     public static final int LEVEL_MEDIUM = 2;
     public static final int LEVEL_HIGH = 3;
@@ -45,10 +44,7 @@ public class RoadIrregularity extends RealmObject {
 
     public static int getIntensityLevel(double normalizedValue) {
 
-        if (normalizedValue <= THRESHOLD_VIBRATION)
-            return LEVEL_VIBRATION;
-
-        else if (normalizedValue <= THRESHOLD_LOW)
+        if (normalizedValue <= THRESHOLD_LOW)
             return LEVEL_LOW;
 
         else if (normalizedValue <= THRESHOLD_MEDIUM)
@@ -56,6 +52,7 @@ public class RoadIrregularity extends RealmObject {
 
         else if (normalizedValue <= THRESHOLD_HIGH)
             return LEVEL_HIGH;
+
 
         else if (normalizedValue <= THRESHOLD_VERY_HIGH)
             return LEVEL_VERY_HIGH;

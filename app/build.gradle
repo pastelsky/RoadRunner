@@ -70,6 +70,7 @@ dependencies {
     compile 'com.parse:parse-android:1.+'
     debugCompile 'com.parse:parseinterceptors:0.0.1'
     compile 'com.facebook.stetho:stetho:1.2.0'
+    compile "com.github.rholder:guava-retrying:2.0.0"
 
 
 }
