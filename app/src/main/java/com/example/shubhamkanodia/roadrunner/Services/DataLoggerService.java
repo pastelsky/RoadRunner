@@ -10,7 +10,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -25,7 +24,6 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
-import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -36,17 +34,25 @@ import com.example.shubhamkanodia.roadrunner.Activities.GPSPermissionDialog;
 import com.example.shubhamkanodia.roadrunner.Activities.RunnerWidget;
 import com.example.shubhamkanodia.roadrunner.Events.ServiceStopEvent;
 import com.example.shubhamkanodia.roadrunner.Helpers.Constants;
-import com.example.shubhamkanodia.roadrunner.Helpers.Haversine;
 import com.example.shubhamkanodia.roadrunner.Helpers.Helper;
 import com.example.shubhamkanodia.roadrunner.Helpers.XYZProcessor;
 import com.example.shubhamkanodia.roadrunner.Models.Journey;
 import com.example.shubhamkanodia.roadrunner.Models.RoadIrregularity;
 import com.example.shubhamkanodia.roadrunner.R;
+import com.github.rholder.retry.RetryException;
+import com.github.rholder.retry.Retryer;
+import com.github.rholder.retry.RetryerBuilder;
+import com.github.rholder.retry.StopStrategies;
+import com.github.rholder.retry.WaitStrategies;
+import com.google.common.base.Predicates;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import de.greenrobot.event.EventBus;
 import io.realm.Realm;
@@ -67,10 +73,12 @@ public class DataLoggerService extends Service implements SensorEventListener {
         }
     };
     String HARDCODED_EMAIL = "abc@example.com";
-    double curLat, curLong;
-    double initLat = 0, initLong = 0;
+    Location initLocation;
+    Location currentLocation;
+    Location checkLocation;
+
+    boolean isGPSConnected = false;
     long lastUpdate = 0;
-    double checkLat = 0, checkLong = 0;
 
     LocationManager mlocManager;
     LocationListener locationListener;
@@ -139,16 +147,18 @@ public class DataLoggerService extends Service implements SensorEventListener {
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                if (initLat == 0 || initLong == 0) {
-                    initLat = location.getLatitude();
-                    initLong = location.getLongitude();
-                    checkLat = location.getLatitude();
-                    checkLong = location.getLongitude();
+                if (!Constants.MOCK_ALLOWED && android.os.Build.VERSION.SDK_INT >= 18 && location.isFromMockProvider()) {
+                    Toast.makeText(DataLoggerService.this, "You seem to be using mock locations. Cannot continue.", Toast.LENGTH_SHORT).show();
+                    destroyService();
                 }
+                if (!isGPSConnected) {
+                    checkLocation = location;
+                    initLocation = location;
+                    isGPSConnected = true;
 
-                curLat = location.getLatitude();
-                curLong = location.getLongitude();
-                Log.e("GPS", "MOVING:" + curLat + ":" + curLong);
+                }
+                currentLocation = location;
+                Log.e("GPS", "MOVING:" + currentLocation.getLatitude() + ":" + currentLocation.getLongitude());
 
             }
 
@@ -171,7 +181,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
             }
         };
 
-        mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+        mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10, 0, locationListener);
 
         senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
 
@@ -189,16 +199,78 @@ public class DataLoggerService extends Service implements SensorEventListener {
         return START_STICKY;
     }
 
+
     private void startListeningForNoMovement() {
 
         noMovementTimer = new Timer();
         noMovementTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                Log.e("TIMER", "Checking for movement in last 5 seconds = " + Haversine.haversine(checkLat, checkLong, curLat, curLong) * 1000);
-            }
-        }, Constants.MOVEMENT_CHECK_INITIAL_DELAY * 1000, Constants.MOVEMENT_CHECK_INTERVAL * 1000);//put here time 1000 milliseconds=1 second
+                double displacement = checkLocation.distanceTo(currentLocation);
+                Log.e("TIMER", "Checking for movement in last 5 seconds = " + displacement + "\n Between points: "
+                               + checkLocation + " and " + currentLocation);
+                checkLocation = currentLocation;
 
+                if (displacement < Constants.MINIMUM_REQD_DISPLACEMENT) {
+                    Log.e("TIMER", "Entering IDLE STATE");
+
+
+                    unregisterListeners();
+                    startBackOff();
+                }
+            }
+        }, Constants.MOVEMENT_CHECK_INITIAL_DELAY * 1000, Constants.MOVEMENT_CHECK_INTERVAL * 1000);
+
+
+    }
+
+    private void startBackOff() {
+
+        Callable<Boolean> callable = new Callable<Boolean>() {
+            public Boolean call() throws Exception {
+
+                if (ContextCompat.checkSelfPermission(DataLoggerService.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(DataLoggerService.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                }
+
+                Location location = mlocManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+                double newDisplacement = checkLocation.distanceTo(location);
+
+                Log.e("RETRY", "Movement after backoff = " + newDisplacement + "\n Between points: "
+                               + checkLocation + " and " + currentLocation);
+                checkLocation = currentLocation;
+
+
+                if (newDisplacement < Constants.MINIMUM_RETRY_DISPLACEMENT)
+                    return null;
+                else {
+                    mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10, 0, locationListener);
+                    senSensorManager.registerListener(DataLoggerService.this, senAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+
+                    startListeningForNoMovement();
+                    return true;
+                }
+
+            }
+        };
+
+
+        Retryer<Boolean> retryer = RetryerBuilder.<Boolean>newBuilder()
+                .retryIfResult(Predicates.<Boolean>isNull())
+                .withWaitStrategy(WaitStrategies.fibonacciWait(Constants.RETRY_MULTIPLIER, Constants.MAX_RETRY_TIME, TimeUnit.SECONDS))
+                .withStopStrategy(StopStrategies.stopAfterAttempt(15))
+                .build();
+
+        try {
+            retryer.call(callable);
+        } catch (RetryException e) {
+            e.printStackTrace();
+//            Toast.makeText(DataLoggerService.this, "Retries failed. Shutting down service.", Toast.LENGTH_SHORT).show();
+            Log.e("RETRY", "All attempts to retry failed.");
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -214,69 +286,38 @@ public class DataLoggerService extends Service implements SensorEventListener {
     @Override
     public void onDestroy() {
 
+        Toast.makeText(this, "STOPPING SERVICE", Toast.LENGTH_SHORT).show();
+
         EventBus.getDefault().post(new ServiceStopEvent());
         updateWidgetStatus(false);
 
-        unregisterListenerers();
+        unregisterListeners();
 
         if (wasStartedSuccessfully) {
 
             Date endTime = new Date();
-//
-//            long totalJourneyTime = (startTime.getTime() - endTime.getTime()) / 1000;
-//
-//
-            Journey newJourney = new Journey(initLat, curLat, initLong, curLong,
-                    startTime, endTime, HARDCODED_EMAIL);
 
-//            realm.beginTransaction();
-//            Journey journeyToSave = realm.copyToRealm(newJourney);
-//            realm.commitTransaction();
+            long totalJourneyTime = (endTime.getTime() - startTime.getTime()) / 1000;
 
-            realm.beginTransaction();
-            newJourney.setroadIrregularityRealmList(roadIrregularityRealmList);
-            realm.copyToRealm(newJourney);
-            realm.commitTransaction();
+            if (totalJourneyTime < Constants.MINIMUM_RECORD_TIME) {
+                Toast.makeText(this, "Data set too small. Try recording for a longer time!", Toast.LENGTH_SHORT).show();
+            } else if (Constants.REQUIRE_MOVEMENT && initLocation.distanceTo(currentLocation) < Constants.MINIMUM_REQD_DISPLACEMENT) {
+                Toast.makeText(this, "Did not detect any geographical movement.", Toast.LENGTH_SHORT).show();
+            } else {
 
-            //TODO:Dont start service here, only in reviever!
-            startService(new Intent(DataLoggerService.this, UploadService.class));
-//            Journey.convertToParseObject(newJourney);
-//            ParseObject.saveAllInBackground(pj);
-//
-//            ParseObject gameScore = new ParseObject("GameScore");
-//            gameScore.put("time", journeyToSave.getEndTime());
-//            gameScore.put("cheatMode", false);
-//            gameScore.saveInBackground();
+                Journey newJourney = new Journey(initLocation.getLatitude(), currentLocation.getLatitude(), initLocation.getLongitude(), currentLocation.getLongitude(),
+                        startTime, endTime, HARDCODED_EMAIL);
 
-//            Intent m = new Intent(this, MainActivity.class);
-//            m.setAction(Intent.ACTION_MAIN);
-//            m.addCategory(Intent.CATEGORY_LAUNCHER);
-//            m.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
-//
-//
-//            if (totTime < MINIMUM_RECORD_TIME) {
-//                Toast.makeText(this, "Data set too small. Try recording for a longer time!", Toast.LENGTH_SHORT).show();
-//                startActivity(m);
-//
-//            } else if (requireMovement && (curLat == 0 || curLong == 0)) {
-//                Toast.makeText(this, "Did not detect any geographical movement. Move it!", Toast.LENGTH_SHORT).show();
-//                startActivity(m);
-//            } else {
-//                Intent resultIntent = new Intent(this, PostActivity.class);
-//
-//                resultIntent.setAction(Intent.ACTION_MAIN);
-//                resultIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-//                resultIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
-//
-//                resultIntent.putExtra("start_time", startTime);
-//                resultIntent.putExtra("end_time", System.currentTimeMillis());
-//                resultIntent.putExtra("start_lat", initLat);
-//                resultIntent.putExtra("end_lat", curLat);
-//                resultIntent.putExtra("start_long", initLong);
-//                resultIntent.putExtra("end_long", curLong);
-//
-//                startActivity(resultIntent);
-//            }
+                realm.beginTransaction();
+                newJourney.setroadIrregularityRealmList(roadIrregularityRealmList);
+                realm.copyToRealm(newJourney);
+                realm.commitTransaction();
+
+                if (Helper.isOnlineOnWifi(this)) {
+                    startService(new Intent(this, UploadService.class));
+                }
+            }
+
 
             wasStartedSuccessfully = false;
 
@@ -306,14 +347,11 @@ public class DataLoggerService extends Service implements SensorEventListener {
     }
 
 
-    public void unregisterListenerers() {
+    public void unregisterListeners() {
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
         }
-
-        Toast.makeText(this, "LISTENERS STOPPING", Toast.LENGTH_SHORT).show();
-
 
 
         mlocManager.removeUpdates(locationListener);
@@ -324,16 +362,14 @@ public class DataLoggerService extends Service implements SensorEventListener {
     }
 
     public void initService() {
+
         realm = Realm.getInstance(this);
-        SharedPreferences sharedPrefs = PreferenceManager
-                .getDefaultSharedPreferences(this);
 
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         mlocManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         registerReceiver(stopServiceReceiver, new IntentFilter("myFilter"));
-
 
         startTime = new Date();
         slidingWindow = new ArrayList<Double>();
@@ -357,7 +393,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
             long curTime = System.currentTimeMillis();
 
-            if ((curTime - lastUpdate) > 80) {
+            if ((curTime - lastUpdate) > Constants.SENSOR_UPDATE_INTERVAL) {
                 lastUpdate = curTime;
 
                 if (slidingWindow.size() >= Constants.SLIDING_WINDOW_CAPACITY) {
@@ -365,7 +401,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
                     double stddev = Helper.stdev(slidingWindow);
 
-                    if (stddev > RoadIrregularity.THRESHOLD_VIBRATION) {
+                    if (stddev > RoadIrregularity.THRESHOLD_VIBRATION && isGPSConnected) {
 
                         int intensity = RoadIrregularity.getIntensityLevel(stddev);
                         Log.e("STDEV: ", "LEVEL:  " + intensity);
@@ -373,11 +409,10 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
                         realm.beginTransaction();
 
-                        RoadIrregularity roadIrregularity = new RoadIrregularity(intensity, curLat, curLong, new Date());
+                        RoadIrregularity roadIrregularity = new RoadIrregularity(intensity, currentLocation.getLatitude(), currentLocation.getLongitude(), new Date());
                         RoadIrregularity toSave = realm.copyToRealm(roadIrregularity);
 
                         realm.commitTransaction();
-
                         roadIrregularityRealmList.add(roadIrregularity);
 
                     }

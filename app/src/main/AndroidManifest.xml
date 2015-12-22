@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.shubhamkanodia.roadrunner">
+<manifest package="com.example.shubhamkanodia.roadrunner"
+          xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -13,6 +13,8 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION"/>
+
 
     <!--
       IMPORTANT: Change "com.parse.starter.permission.C2D_MESSAGE" in the lines below
@@ -115,6 +117,10 @@
                 <category android:name="com.example.shubhamkanodia.roadrunner" />
             </intent-filter>
         </receiver>
+
+        <service
+            android:name="com.example.shubhamkanodia.roadrunner.ActivityRecognition.ActivitiesIntentService"
+            android:exported="false"/>
     </application>
 
 </manifest>

@@ -1,5 +1,6 @@
 package com.example.shubhamkanodia.roadrunner.Activities;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
@@ -9,11 +10,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.example.shubhamkanodia.roadrunner.Adapters.SampleFragmentPagerAdapter;
+import com.example.shubhamkanodia.roadrunner.Fragments.MainFragment;
 import com.example.shubhamkanodia.roadrunner.R;
 
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final int REQUEST_CHECK_SETTINGS = 3;
     int activeTab;
     ViewPager viewPager;
     SampleFragmentPagerAdapter sampleFragmentPagerAdapter;
@@ -75,6 +78,26 @@ public void changeFragment(){
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case REQUEST_CHECK_SETTINGS:
+                switch (resultCode) {
+                    case Activity.RESULT_OK:
+
+                        MainFragment fragment = (MainFragment) SampleFragmentPagerAdapter.getCurrentFragment(viewPager,sampleFragmentPagerAdapter);
+                        fragment.toggleRecordingAndUpdateUI();
+
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        break;
+                    default:
+                        break;
+                }
+                break;
+        }
     }
 
 

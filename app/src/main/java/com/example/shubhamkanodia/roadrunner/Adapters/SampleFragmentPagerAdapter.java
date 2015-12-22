@@ -4,9 +4,14 @@ import android.content.Context;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
 
 import com.example.shubhamkanodia.roadrunner.Fragments.MainFragment;
 import com.example.shubhamkanodia.roadrunner.Fragments.RecordsFragment;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * Created by shubhamkanodia on 04/09/15.
@@ -19,6 +24,30 @@ public class SampleFragmentPagerAdapter extends FragmentPagerAdapter {
     public SampleFragmentPagerAdapter(FragmentManager fm, Context context) {
         super(fm);
         this.context = context;
+    }
+
+    public static Fragment getCurrentFragment(ViewPager pager, FragmentPagerAdapter adapter) {
+        try {
+            Method m = adapter.getClass().getSuperclass().getDeclaredMethod("makeFragmentName", int.class, long.class);
+            Field f = adapter.getClass().getSuperclass().getDeclaredField("mFragmentManager");
+            f.setAccessible(true);
+            FragmentManager fm = (FragmentManager) f.get(adapter);
+            m.setAccessible(true);
+            String tag = null;
+            tag = (String) m.invoke(null, pager.getId(), (long) pager.getCurrentItem());
+            return fm.findFragmentByTag(tag);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override

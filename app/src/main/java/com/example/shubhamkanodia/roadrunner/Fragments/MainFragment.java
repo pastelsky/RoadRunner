@@ -2,6 +2,7 @@ package com.example.shubhamkanodia.roadrunner.Fragments;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -9,6 +10,8 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,10 +19,25 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.example.shubhamkanodia.roadrunner.Activities.AboutActivity;
+import com.example.shubhamkanodia.roadrunner.Events.ServiceStopEvent;
+import com.example.shubhamkanodia.roadrunner.Helpers.Constants;
 import com.example.shubhamkanodia.roadrunner.R;
 import com.example.shubhamkanodia.roadrunner.Services.DataLoggerService;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStates;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.common.eventbus.EventBus;
 
 import org.achartengine.ChartFactory;
 import org.achartengine.GraphicalView;
@@ -34,11 +52,15 @@ import butterknife.OnClick;
 import uk.co.deanwild.materialshowcaseview.MaterialShowcaseView;
 
 // In this case, the fragment displays simple text based on the page
-public class MainFragment extends Fragment implements SensorEventListener {
+public class MainFragment extends Fragment implements SensorEventListener,
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
+    private static final int REQ_ENABLE_GPS = 3;
     @Bind(R.id.vDummy)
     View vDummy;
     XYMultipleSeriesDataset multipleSeriesDataset;
+    GoogleApiClient mGoogleApiClient;
+    LocationRequest mLocationRequest;
     private Chronometer chronometer;
     private Button bRecord;
     private LinearLayout lvChart;
@@ -68,12 +90,15 @@ public class MainFragment extends Fragment implements SensorEventListener {
         View view = inflater.inflate(R.layout.fragment_main, container, false);
 
         ButterKnife.bind(this, view);
+        EventBus eventbus = new EventBus();
+        eventbus.register(this);
 
 
         bRecord = (Button) view.findViewById(R.id.bRecord);
         chronometer = (Chronometer) view.findViewById(R.id.chronometer);
 
         lvChart = (LinearLayout) view.findViewById(R.id.lvChart);
+
 
         new MaterialShowcaseView.Builder(getActivity())
                 .setTarget(vDummy)
@@ -84,6 +109,7 @@ public class MainFragment extends Fragment implements SensorEventListener {
                 .show();
 
         prepareChart();
+        initGoogleServices();
 
         chartView = ChartFactory.getCubeLineChartView(getActivity(), multipleSeriesDataset, mRenderer, 0.4f);
         lvChart.addView(chartView);
@@ -101,6 +127,23 @@ public class MainFragment extends Fragment implements SensorEventListener {
         return view;
     }
 
+    private void initGoogleServices() {
+
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(getContext())
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
+        }
+        mGoogleApiClient.connect();
+
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(Constants.LOCATION_FETCH_INTERVAL);
+        mLocationRequest.setFastestInterval(Constants.LOCATION_FETCH_INTERVAL_FASTEST);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+    }
+
 
     @Override
     public void onPause() {
@@ -109,6 +152,13 @@ public class MainFragment extends Fragment implements SensorEventListener {
 
 
     }
+
+    public void onEvent(ServiceStopEvent event) {
+        /* Do something */
+        setEndUI();
+    }
+
+    ;
 
     @Override
     public void onStop() {
@@ -188,7 +238,10 @@ public class MainFragment extends Fragment implements SensorEventListener {
 
     @OnClick(R.id.bRecord)
     public void toggleRecorder(View v) {
-        Button toggleButton = (Button) v;
+        checkForGPS();
+    }
+
+    public void toggleRecordingAndUpdateUI() {
 
         if (!DataLoggerService.wasStartedSuccessfully) {
 
@@ -256,4 +309,58 @@ public class MainFragment extends Fragment implements SensorEventListener {
 
 
     }
+
+
+    private void checkForGPS() {
+
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(mLocationRequest)
+                .setAlwaysShow(true);
+
+        PendingResult<LocationSettingsResult> result =
+                LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient, builder.build());
+
+        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+            @Override
+            public void onResult(LocationSettingsResult result) {
+                final Status status = result.getStatus();
+                final LocationSettingsStates s = result.getLocationSettingsStates();
+                switch (status.getStatusCode()) {
+                    case LocationSettingsStatusCodes.SUCCESS:
+                        toggleRecordingAndUpdateUI();
+                        break;
+
+                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                        try {
+                            status.startResolutionForResult(getActivity(), REQ_ENABLE_GPS);
+                        } catch (IntentSender.SendIntentException e) {
+                            // Ignore the error.
+                        }
+                        break;
+                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                        Toast.makeText(getActivity(), "Location Services are not accurate enough to record.", Toast.LENGTH_SHORT).show();
+                        break;
+                }
+            }
+        });
+    }
+
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        Toast.makeText(getContext(), "GOOGLE API Connection connected", Toast.LENGTH_SHORT).show();
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Toast.makeText(getContext(), "GOOGLE API Connection failed", Toast.LENGTH_SHORT).show();
+
+    }
+
 }

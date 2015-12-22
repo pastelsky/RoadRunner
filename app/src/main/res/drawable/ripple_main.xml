@@ -1,7 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<selector xmlns:android="http://schemas.android.com/apk/res/android"
-          android:color="#1c2b38">
-
-    <item android:drawable="@drawable/rect"/>
-
-</selector>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid
+        android:color="#1c2b38"/>
+</shape>
