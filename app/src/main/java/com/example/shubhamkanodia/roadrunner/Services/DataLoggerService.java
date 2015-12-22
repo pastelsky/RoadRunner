@@ -24,6 +24,9 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -44,6 +47,9 @@ import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.common.base.Predicates;
 
 import java.util.ArrayList;
@@ -63,7 +69,7 @@ import io.realm.RealmList;
  */
 
 
-public class DataLoggerService extends Service implements SensorEventListener {
+public class DataLoggerService extends Service implements SensorEventListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     public static boolean wasStartedSuccessfully = false;
     protected BroadcastReceiver stopServiceReceiver = new BroadcastReceiver() {
@@ -95,6 +101,9 @@ public class DataLoggerService extends Service implements SensorEventListener {
     RealmList<RoadIrregularity> roadIrregularityRealmList;
 
     Timer noMovementTimer;
+
+    //To get current position at start of journey
+    GoogleApiClient mGoogleApiClient;
 
 
     @Override
@@ -208,7 +217,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
             public void run() {
                 double displacement = checkLocation.distanceTo(currentLocation);
                 Log.e("TIMER", "Checking for movement in last 5 seconds = " + displacement + "\n Between points: "
-                               + checkLocation + " and " + currentLocation);
+                        + checkLocation + " and " + currentLocation);
                 checkLocation = currentLocation;
 
                 if (displacement < Constants.MINIMUM_REQD_DISPLACEMENT) {
@@ -230,7 +239,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
             public Boolean call() throws Exception {
 
                 if (ContextCompat.checkSelfPermission(DataLoggerService.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                    ContextCompat.checkSelfPermission(DataLoggerService.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        ContextCompat.checkSelfPermission(DataLoggerService.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 }
 
                 Location location = mlocManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -238,7 +247,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
                 double newDisplacement = checkLocation.distanceTo(location);
 
                 Log.e("RETRY", "Movement after backoff = " + newDisplacement + "\n Between points: "
-                               + checkLocation + " and " + currentLocation);
+                        + checkLocation + " and " + currentLocation);
                 checkLocation = currentLocation;
 
 
@@ -346,6 +355,19 @@ public class DataLoggerService extends Service implements SensorEventListener {
         }
     }
 
+    public Location getCurrentLocation() {
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
+        }
+        mGoogleApiClient.connect();
+
+        return currentLocation;
+
+    }
 
     public void unregisterListeners() {
 
@@ -373,6 +395,8 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
         startTime = new Date();
         slidingWindow = new ArrayList<Double>();
+
+        currentLocation = getCurrentLocation();
 
         updateWidgetStatus(true);
 
@@ -427,4 +451,32 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
     }
 
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        } else {
+            initLocation = LocationServices.FusedLocationApi.getLastLocation(
+                    mGoogleApiClient);
+            currentLocation = LocationServices.FusedLocationApi.getLastLocation(
+                    mGoogleApiClient);
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
 }
