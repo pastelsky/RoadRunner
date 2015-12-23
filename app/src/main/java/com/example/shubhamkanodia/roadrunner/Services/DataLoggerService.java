@@ -21,6 +21,9 @@ import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
+import android.media.SoundPool;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
@@ -34,6 +37,7 @@ import android.widget.RemoteViews;
 import android.widget.Toast;
 
 import com.example.shubhamkanodia.roadrunner.Activities.GPSPermissionDialog;
+import com.example.shubhamkanodia.roadrunner.Activities.MainActivity;
 import com.example.shubhamkanodia.roadrunner.Activities.RunnerWidget;
 import com.example.shubhamkanodia.roadrunner.Events.ServiceStopEvent;
 import com.example.shubhamkanodia.roadrunner.Helpers.Constants;
@@ -83,7 +87,9 @@ public class DataLoggerService extends Service implements SensorEventListener, G
     Location currentLocation;
     Location checkLocation;
 
-    boolean isGPSConnected = false;
+    //    boolean isGPSConnected = false; Testing
+    boolean isGPSConnected = true;
+
     long lastUpdate = 0;
 
     LocationManager mlocManager;
@@ -105,11 +111,23 @@ public class DataLoggerService extends Service implements SensorEventListener, G
     //To get current position at start of journey
     GoogleApiClient mGoogleApiClient;
 
+    //sounds
+
+    SoundPool ourSounds;
+    int soundLow;
+    int soundmedium;
+    int soundHigh;
+    int soundVeryHigh;
+    int soundExtreme;
+
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         initService();
+        initLocations();
+        initSounds();
+
         roadIrregularityRealmList = new RealmList<>();
 
         if (wasStartedSuccessfully)
@@ -129,6 +147,7 @@ public class DataLoggerService extends Service implements SensorEventListener, G
 
 
         PendingIntent contentIntent = PendingIntent.getBroadcast(this, 0, new Intent("myFilter"), PendingIntent.FLAG_CANCEL_CURRENT);
+        PendingIntent toHomeIntent = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), 0);
 
         Bitmap bm = Bitmap.createBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_run));
         Notification notification = new NotificationCompat.Builder(this)
@@ -137,12 +156,13 @@ public class DataLoggerService extends Service implements SensorEventListener, G
                 .setContentText(" Don't forget to finish recording when done.")
                 .setSmallIcon(R.drawable.ic_run_notif)
                 .setLargeIcon(bm)
-                .setContentIntent(contentIntent)
+                .setContentIntent(toHomeIntent)
                 .setOngoing(true)
                 .setAutoCancel(true)
                 .setPriority(Notification.PRIORITY_HIGH)
                 .addAction(R.drawable.ic_stop,
                         "Stop Recording", contentIntent).build();
+
 
         startForeground(Constants.RECORD_NOTIF_ID, notification);
 
@@ -206,6 +226,23 @@ public class DataLoggerService extends Service implements SensorEventListener, G
         Log.e("MAX_ACCL_RANGE", "RANGE: " + senAccelerometer.getMaximumRange() + "\nResolution: " + senAccelerometer.getResolution() + "\nDelays: " + senAccelerometer.getMinDelay() + " - " + senAccelerometer.getMinDelay());
 
         return START_STICKY;
+    }
+
+    private void initSounds() {
+
+        AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .setUsage(AudioAttributes.USAGE_GAME)
+                .build();
+        ourSounds = new SoundPool.Builder()
+                .setMaxStreams(15)
+                .setAudioAttributes(audioAttributes)
+                .build();
+        soundLow = ourSounds.load(this, R.raw.low, 1);
+        soundmedium = ourSounds.load(this, R.raw.medium, 1);
+        soundHigh = ourSounds.load(this, R.raw.high, 1);
+        soundVeryHigh = ourSounds.load(this, R.raw.veryhigh, 1);
+        soundExtreme = ourSounds.load(this, R.raw.extreme, 1);
     }
 
 
@@ -308,23 +345,22 @@ public class DataLoggerService extends Service implements SensorEventListener, G
 
             long totalJourneyTime = (endTime.getTime() - startTime.getTime()) / 1000;
 
-            if (totalJourneyTime < Constants.MINIMUM_RECORD_TIME) {
-                Toast.makeText(this, "Data set too small. Try recording for a longer time!", Toast.LENGTH_SHORT).show();
-            } else if (Constants.REQUIRE_MOVEMENT && initLocation.distanceTo(currentLocation) < Constants.MINIMUM_REQD_DISPLACEMENT) {
-                Toast.makeText(this, "Did not detect any geographical movement.", Toast.LENGTH_SHORT).show();
-            } else {
+//            if (totalJourneyTime < Constants.MINIMUM_RECORD_TIME) {
+//                Toast.makeText(this, "Data set too small. Try recording for a longer time!", Toast.LENGTH_SHORT).show();
+//            } else if (Constants.REQUIRE_MOVEMENT && initLocation.distanceTo(currentLocation) < Constants.MINIMUM_REQD_DISPLACEMENT) {
+//                Toast.makeText(this, "Did not detect any geographical movement.", Toast.LENGTH_SHORT).show();
+//            } else {
 
-                Journey newJourney = new Journey(initLocation.getLatitude(), currentLocation.getLatitude(), initLocation.getLongitude(), currentLocation.getLongitude(),
-                        startTime, endTime, HARDCODED_EMAIL);
+            Journey newJourney = new Journey(initLocation.getLatitude(), currentLocation.getLatitude(), initLocation.getLongitude(), currentLocation.getLongitude(),
+                    startTime, endTime, HARDCODED_EMAIL);
 
-                realm.beginTransaction();
-                newJourney.setroadIrregularityRealmList(roadIrregularityRealmList);
-                realm.copyToRealm(newJourney);
-                realm.commitTransaction();
+            realm.beginTransaction();
+            newJourney.setroadIrregularityRealmList(roadIrregularityRealmList);
+            realm.copyToRealm(newJourney);
+            realm.commitTransaction();
 
-                if (Helper.isOnlineOnWifi(this)) {
-                    startService(new Intent(this, UploadService.class));
-                }
+            if (Helper.isOnlineOnWifi(this)) {
+                startService(new Intent(this, UploadService.class));
             }
 
 
@@ -355,7 +391,7 @@ public class DataLoggerService extends Service implements SensorEventListener, G
         }
     }
 
-    public Location getCurrentLocation() {
+    public void initLocations() {
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
@@ -364,9 +400,6 @@ public class DataLoggerService extends Service implements SensorEventListener, G
                     .build();
         }
         mGoogleApiClient.connect();
-
-        return currentLocation;
-
     }
 
     public void unregisterListeners() {
@@ -396,7 +429,6 @@ public class DataLoggerService extends Service implements SensorEventListener, G
         startTime = new Date();
         slidingWindow = new ArrayList<Double>();
 
-        currentLocation = getCurrentLocation();
 
         updateWidgetStatus(true);
 
@@ -438,6 +470,8 @@ public class DataLoggerService extends Service implements SensorEventListener, G
 
                         realm.commitTransaction();
                         roadIrregularityRealmList.add(roadIrregularity);
+                        playSound(intensity);
+
 
                     }
 
@@ -450,6 +484,12 @@ public class DataLoggerService extends Service implements SensorEventListener, G
         }
 
     }
+
+    private void playSound(int intensity) {
+        int sounds[] = {soundLow, soundmedium, soundHigh, soundVeryHigh, soundExtreme};
+        ourSounds.play(sounds[intensity-1], 0.9f, 0.9f, 1, 0, 1);
+    }
+
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
@@ -466,6 +506,8 @@ public class DataLoggerService extends Service implements SensorEventListener, G
             initLocation = LocationServices.FusedLocationApi.getLastLocation(
                     mGoogleApiClient);
             currentLocation = LocationServices.FusedLocationApi.getLastLocation(
+                    mGoogleApiClient);
+            checkLocation = LocationServices.FusedLocationApi.getLastLocation(
                     mGoogleApiClient);
         }
     }

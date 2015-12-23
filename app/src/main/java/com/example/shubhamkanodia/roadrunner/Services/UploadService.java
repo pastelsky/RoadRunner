@@ -66,7 +66,8 @@ public class UploadService extends Service {
             mBuilder = new NotificationCompat.Builder(this);
             mBuilder.setContentTitle("Uploading data...")
                     .setSmallIcon(R.drawable.ic_upload)
-                    .setProgress(journeyRealmResults.size(), 0, false);
+                    .setProgress(journeyRealmResults.size(), 0, false)
+                    .setOngoing(true);
 
             startForeground(notif_id,
                     mBuilder.build());
@@ -92,7 +93,6 @@ public class UploadService extends Service {
                             realm.beginTransaction();
                             j.setSynced(true);
                             realm.commitTransaction();
-
                             mBuilder.setProgress(journeyRealmResults.size(), syncedCount, false);
                             mNotifyManager.notify(notif_id, mBuilder.build());
 
@@ -100,6 +100,7 @@ public class UploadService extends Service {
                             Log.e("Failure ", "Yeah");
                         }
                         if (++syncedCount == journeyRealmResults.size()) {
+                            mBuilder.setOngoing(false);
                             stopForeground(true);
                             Log.e("NOTIFICATION:", "CANCELLING");
                         }

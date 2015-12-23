@@ -25,10 +25,13 @@ public class Constants {
     public static final int SENSOR_UPDATE_INTERVAL = 80;
 
 
-
     //Sleep timers
     public static final int MOVEMENT_CHECK_INTERVAL = 10;
-    public static final int MOVEMENT_CHECK_INITIAL_DELAY = 20;
+    //    public static final int MOVEMENT_CHECK_INITIAL_DELAY = 20;
+
+    //testing
+    public static final int MOVEMENT_CHECK_INITIAL_DELAY = 100;
+
 
     public static final int MINIMUM_REQD_DISPLACEMENT = 2;
     public static final int MINIMUM_RETRY_DISPLACEMENT = 1;
