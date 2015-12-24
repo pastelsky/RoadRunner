@@ -2,7 +2,7 @@ package com.example.shubhamkanodia.roadrunner.Services;
 
 import android.Manifest;
 import android.app.Notification;
-import android.app.PendingIntent;git
+import android.app.PendingIntent;
 import android.app.Service;
 import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
@@ -21,11 +21,13 @@ import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.AudioAttributes;
 import android.media.SoundPool;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
 import android.speech.tts.TextToSpeech;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -33,8 +35,10 @@ import android.widget.RemoteViews;
 import android.widget.Toast;
 
 import com.example.shubhamkanodia.roadrunner.Activities.GPSPermissionDialog;
+import com.example.shubhamkanodia.roadrunner.Activities.MainActivity;
 import com.example.shubhamkanodia.roadrunner.Activities.RunnerWidget;
 import com.example.shubhamkanodia.roadrunner.Events.ServiceStopEvent;
+import com.example.shubhamkanodia.roadrunner.Fragments.MainFragment;
 import com.example.shubhamkanodia.roadrunner.Helpers.Constants;
 import com.example.shubhamkanodia.roadrunner.Helpers.Helper;
 import com.example.shubhamkanodia.roadrunner.Helpers.XYZProcessor;
@@ -88,11 +92,15 @@ public class DataLoggerService extends Service implements SensorEventListener {
     int soundHigh;
     int soundVeryHigh;
     int soundExtreme;
+    int soundServiceStarted;
+    int soundServiceTerminated;
 
+    boolean isGPSConnected = true;
 
-    boolean isGPSConnected = false;
+    // Testing
+    //    boolean isGPSConnected = false;
+
     long lastUpdate = 0;
-
     LocationManager mlocManager;
     LocationListener locationListener;
     SensorManager senSensorManager;
@@ -108,20 +116,22 @@ public class DataLoggerService extends Service implements SensorEventListener {
     RealmList<RoadIrregularity> roadIrregularityRealmList;
 
     Timer noMovementTimer;
-    TextToSpeech mTts;
 
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         initService();
-//        initSounds();
+        initSounds();
+
         roadIrregularityRealmList = new RealmList<>();
 
         if (wasStartedSuccessfully)
             destroyService();
         else {
             Toast.makeText(this, "Recording data in background. Stop recording from notification bar when done.", Toast.LENGTH_LONG).show();
+            //Not sure why this sound doesnt play.
+            ourSounds.play(soundServiceStarted, 0.9f, 0.9f, 1, 0, 1);
 
         }
 
@@ -137,6 +147,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
 
         PendingIntent contentIntent = PendingIntent.getBroadcast(this, 0, new Intent("myFilter"), PendingIntent.FLAG_CANCEL_CURRENT);
+        PendingIntent toMainFragment = PendingIntent.getActivity(this, 0, new Intent(getApplicationContext(), MainActivity.class), 0);
 
         Bitmap bm = Bitmap.createBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_run));
         Notification notification = new NotificationCompat.Builder(this)
@@ -145,7 +156,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
                 .setContentText(" Don't forget to finish recording when done.")
                 .setSmallIcon(R.drawable.ic_run_notif)
                 .setLargeIcon(bm)
-                .setContentIntent(contentIntent)
+                .setContentIntent(toMainFragment)
                 .setOngoing(true)
                 .setAutoCancel(true)
                 .setPriority(Notification.PRIORITY_HIGH)
@@ -215,22 +226,27 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
         return START_STICKY;
     }
-//    private void initSounds() {
-//
-//        AudioAttributes audioAttributes = new AudioAttributes.Builder()
-//                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-//                .setUsage(AudioAttributes.USAGE_GAME)
-//                .build();
-//        ourSounds = new SoundPool.Builder()
-//                .setMaxStreams(15)
-//                .setAudioAttributes(audioAttributes)
-//                .build();
-//        soundLow = ourSounds.load(this, R.raw.low, 1);
-//        soundmedium = ourSounds.load(this, R.raw.medium, 1);
-//        soundHigh = ourSounds.load(this, R.raw.high, 1);
-//        soundVeryHigh = ourSounds.load(this, R.raw.veryhigh, 1);
-//        soundExtreme = ourSounds.load(this, R.raw.extreme, 1);
-//    }
+
+
+    private void initSounds() {
+
+        AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .setUsage(AudioAttributes.USAGE_GAME)
+                .build();
+        ourSounds = new SoundPool.Builder()
+                .setMaxStreams(15)
+                .setAudioAttributes(audioAttributes)
+                .build();
+        soundLow = ourSounds.load(this, R.raw.low, 1);
+        soundmedium = ourSounds.load(this, R.raw.medium, 1);
+        soundHigh = ourSounds.load(this, R.raw.high, 1);
+        soundVeryHigh = ourSounds.load(this, R.raw.veryhigh, 1);
+        soundExtreme = ourSounds.load(this, R.raw.extreme, 1);
+        soundServiceStarted = ourSounds.load(this, R.raw.servicestarted, 1);
+        soundServiceTerminated = ourSounds.load(this, R.raw.serviceterminated, 1);
+
+    }
 
 
     private void startListeningForNoMovement() {
@@ -241,7 +257,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
             public void run() {
                 double displacement = checkLocation.distanceTo(currentLocation);
                 Log.e("TIMER", "Checking for movement in last 5 seconds = " + displacement + "\n Between points: "
-                               + checkLocation + " and " + currentLocation);
+                        + checkLocation + " and " + currentLocation);
                 checkLocation = currentLocation;
 
                 if (displacement < Constants.MINIMUM_REQD_DISPLACEMENT) {
@@ -263,7 +279,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
             public Boolean call() throws Exception {
 
                 if (ContextCompat.checkSelfPermission(DataLoggerService.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                    ContextCompat.checkSelfPermission(DataLoggerService.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        ContextCompat.checkSelfPermission(DataLoggerService.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 }
 
                 Location location = mlocManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -271,7 +287,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
                 double newDisplacement = checkLocation.distanceTo(location);
 
                 Log.e("RETRY", "Movement after backoff = " + newDisplacement + "\n Between points: "
-                               + checkLocation + " and " + currentLocation);
+                        + checkLocation + " and " + currentLocation);
                 checkLocation = currentLocation;
 
 
@@ -318,7 +334,6 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
     @Override
     public void onDestroy() {
-
         Toast.makeText(this, "STOPPING SERVICE", Toast.LENGTH_SHORT).show();
 
         EventBus.getDefault().post(new ServiceStopEvent());
@@ -397,11 +412,25 @@ public class DataLoggerService extends Service implements SensorEventListener {
     }
 
     public void initService() {
+        mlocManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        Location location = mlocManager
+                .getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        currentLocation = checkLocation = initLocation = location;
 
         realm = Realm.getInstance(this);
 
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-        mlocManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         registerReceiver(stopServiceReceiver, new IntentFilter("myFilter"));
@@ -410,22 +439,12 @@ public class DataLoggerService extends Service implements SensorEventListener {
         slidingWindow = new ArrayList<Double>();
 
         updateWidgetStatus(true);
-        mTts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int i) {
-                mTts.setLanguage(Locale.US);
 
-            }
-        });
-
-        String myText1 = "Did you sleep well?";
-        String myText2 = "I hope so, because it's time to wake up.";
-        mTts.speak(myText1, TextToSpeech.QUEUE_FLUSH, null);
-        mTts.speak(myText2, TextToSpeech.QUEUE_ADD, null);
 
     }
 
     public void destroyService() {
+        ourSounds.play(soundServiceTerminated, 0.9f, 0.9f, 1, 0, 1);
         stopForeground(true);
         stopSelf();
     }
