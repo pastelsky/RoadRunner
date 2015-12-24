@@ -66,7 +66,7 @@ public class RecordsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_records, container, false);
         realm = Realm.getInstance(getActivity().getApplicationContext());
 
-        Toast.makeText(getContext(), " Fragment being called", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(getContext(), " Fragment being called", Toast.LENGTH_SHORT).show();
 
         itemListener = new RecordingsAdapter.RecyclerViewClickListener() {
             @Override

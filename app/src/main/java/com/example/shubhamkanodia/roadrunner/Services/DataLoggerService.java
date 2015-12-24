@@ -75,6 +75,8 @@ import io.realm.RealmList;
 public class DataLoggerService extends Service implements SensorEventListener {
 
     public static boolean wasStartedSuccessfully = false;
+    public static boolean isRunning = false;
+
     protected BroadcastReceiver stopServiceReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -143,6 +145,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
             stopSelf();
         } else {
             wasStartedSuccessfully = true;
+            isRunning = true;
         }
 
 
@@ -444,6 +447,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
     }
 
     public void destroyService() {
+        isRunning = false;
         ourSounds.play(soundServiceTerminated, 0.9f, 0.9f, 1, 0, 1);
         stopForeground(true);
         stopSelf();

@@ -176,6 +176,14 @@ public class MainFragment extends Fragment implements SensorEventListener,
     @Override
     public void onResume() {
         super.onResume();
+        if (!DataLoggerService.isRunning) {
+            if (DataLoggerService.wasStartedSuccessfully)
+                setStartUI();
+            else
+                setEndUI();
+        }
+
+
         senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
 
     }
@@ -354,8 +362,6 @@ public class MainFragment extends Fragment implements SensorEventListener,
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        Toast.makeText(getContext(), "GOOGLE API Connection connected", Toast.LENGTH_SHORT).show();
-
     }
 
     @Override
