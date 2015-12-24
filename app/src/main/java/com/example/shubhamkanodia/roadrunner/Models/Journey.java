@@ -1,8 +1,13 @@
 package com.example.shubhamkanodia.roadrunner.Models;
 
+import com.example.shubhamkanodia.roadrunner.Helpers.Haversine;
+import com.example.shubhamkanodia.roadrunner.Helpers.Helper;
 import com.parse.ParseInstallation;
 import com.parse.ParseObject;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import io.realm.RealmList;
@@ -20,8 +25,8 @@ public class Journey extends RealmObject {
     private double startLong;
     private double endLong;
 
-    private Date startTime;
-    private Date endTime;
+    private String startTime;
+    private String endTime;
 
     private String volunteerIdentity;
     private String volunteerEmail;
@@ -29,13 +34,14 @@ public class Journey extends RealmObject {
 
     private boolean isSynced;
     private RealmList<RoadIrregularity> roadIrregularityRealmList;
+    private double distance;
+    private String startAddress;
+    private String endAddress;
 
     public Journey() {
     }
 
-    ;
-
-    public Journey(double startLat, double endLat, double startLong, double endLong, Date startTime, Date endTime, String volunteerEmail) {
+    public Journey(double startLat, double endLat, double startLong, double endLong, String startTime, String endTime, String volunteerEmail) {
         this.startLat = startLat;
         this.endLat = endLat;
         this.startLong = startLong;
@@ -45,10 +51,11 @@ public class Journey extends RealmObject {
         this.volunteerEmail = volunteerEmail;
         this.isSynced = false;
         this.roadIrregularityRealmList = new RealmList<>();
+        this.distance = Math.round(Haversine.haversine(startLat, startLong, endLat, endLong) * 100.0) / 100.0;
     }
 
     public static ParseObject convertToParseObject(Journey j) {
-
+        Date startDate = null, endDate = null;
         ParseObject p = new ParseObject("Journeys");
 
         p.put("startLat", j.getStartLat());
@@ -57,13 +64,50 @@ public class Journey extends RealmObject {
         p.put("endLat", j.getEndLat());
         p.put("endLong", j.getEndLong());
 
-        p.put("startTime", j.getStartTime());
-        p.put("endTime", j.getEndTime());
+//        p.put("startTime", j.getStartTime());
+//        p.put("endTime", j.getEndTime());
 
         p.put("volunteerEmail", j.getVolunteerEmail());
         p.put("volunteerIdentity", ParseInstallation.getCurrentInstallation());
 
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+
+        try {
+            startDate = formatter.parse(j.getStartTime());
+            endDate = formatter.parse(j.getEndTime());
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        p.put("startTime", startDate);
+        p.put("endTime", endDate);
+
+
         return p;
+    }
+
+    public void setStartAddress(String startAddress) {
+        this.startAddress = startAddress;
+    }
+
+    public String getStartAddress() {
+        return this.startAddress;
+    }
+
+    public void setEndAddress(String startAddress) {
+        this.endAddress = startAddress;
+    }
+
+    public String getEndAddress() {
+        return this.endAddress;
+    }
+
+    public double getDistance() {
+        return this.distance;
+    }
+
+    public void setDistance(double d) {
+        this.distance = distance;
     }
 
     public boolean isSynced() {
@@ -106,19 +150,20 @@ public class Journey extends RealmObject {
         this.endLong = endLong;
     }
 
-    public Date getStartTime() {
-        return startTime;
+    public String getStartTime() {
+
+        return this.startTime;
     }
 
-    public void setStartTime(Date startTime) {
+    public void setStartTime(String startTime) {
         this.startTime = startTime;
     }
 
-    public Date getEndTime() {
-        return endTime;
+    public String getEndTime() {
+        return this.endTime;
     }
 
-    public void setEndTime(Date endTime) {
+    public void setEndTime(String endTime) {
         this.endTime = endTime;
     }
 

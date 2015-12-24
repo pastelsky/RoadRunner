@@ -2,7 +2,7 @@ package com.example.shubhamkanodia.roadrunner.Services;
 
 import android.Manifest;
 import android.app.Notification;
-import android.app.PendingIntent;
+import android.app.PendingIntent;git
 import android.app.Service;
 import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
@@ -21,7 +21,6 @@ import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.media.AudioAttributes;
 import android.media.SoundPool;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -49,6 +48,8 @@ import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
 import com.google.common.base.Predicates;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
@@ -337,8 +338,10 @@ public class DataLoggerService extends Service implements SensorEventListener {
                 Toast.makeText(this, "Did not detect any geographical movement.", Toast.LENGTH_SHORT).show();
             } else {
 
+                DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
+
                 Journey newJourney = new Journey(initLocation.getLatitude(), currentLocation.getLatitude(), initLocation.getLongitude(), currentLocation.getLongitude(),
-                        startTime, endTime, HARDCODED_EMAIL);
+                        df.format(startTime), df.format(endTime), HARDCODED_EMAIL);
 
                 realm.beginTransaction();
                 newJourney.setroadIrregularityRealmList(roadIrregularityRealmList);
@@ -441,8 +444,8 @@ public class DataLoggerService extends Service implements SensorEventListener {
                 lastUpdate = curTime;
 
                 if (slidingWindow.size() >= Constants.SLIDING_WINDOW_CAPACITY) {
-                    Log.e("STDEV: ", "LEVEL:  " + Helper.stdev(slidingWindow));
 
+                    Log.e("STDEV: ", "LEVEL:  " + Helper.stdev(slidingWindow));
                     double stddev = Helper.stdev(slidingWindow);
 
                     if (stddev > RoadIrregularity.THRESHOLD_VIBRATION && isGPSConnected) {
@@ -460,14 +463,10 @@ public class DataLoggerService extends Service implements SensorEventListener {
                         roadIrregularityRealmList.add(roadIrregularity);
                         playSound(intensity);
 
-
                     }
-
                     slidingWindow.clear();
-
                 }
                 slidingWindow.add(processor.normalizedValue);
-
             }
         }
 
@@ -475,7 +474,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
     private void playSound(int intensity) {
         int sounds[] = {soundLow, soundmedium, soundHigh, soundVeryHigh, soundExtreme};
-        ourSounds.play(sounds[intensity-1], 0.9f, 0.9f, 1, 0, 1);
+        ourSounds.play(sounds[intensity - 1], 0.9f, 0.9f, 1, 0, 1);
     }
 
 }

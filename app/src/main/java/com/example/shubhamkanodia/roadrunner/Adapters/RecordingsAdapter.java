@@ -8,6 +8,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.example.shubhamkanodia.roadrunner.BR;
+import com.example.shubhamkanodia.roadrunner.Models.Journey;
 import com.example.shubhamkanodia.roadrunner.Models.RecordingItem;
 import com.example.shubhamkanodia.roadrunner.R;
 
@@ -20,11 +22,11 @@ import java.util.List;
 public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.BindingHolder>  {
      static Context context;
      static private RecyclerViewClickListener itemClicker;
-    private List<RecordingItem> records;
+    private List<Journey> journies;
 
 
-    public RecordingsAdapter(Context context, RecyclerViewClickListener r, List<RecordingItem> records) {
-        this.records = records;
+    public RecordingsAdapter(Context context, RecyclerViewClickListener r, List<Journey> journeys) {
+        this.journies = journeys;
         this.context = context;
         this.itemClicker = r;
     }
@@ -39,14 +41,14 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Bi
 
     @Override
     public void onBindViewHolder(BindingHolder holder, int position) {
-        final RecordingItem record = records.get(position);
-        holder.getBinding().setVariable(com.example.shubhamkanodia.roadrunner.BR.record, record);
+        final Journey record = journies.get(position);
+        holder.getBinding().setVariable(BR.journey, record);
         holder.getBinding().executePendingBindings();
     }
 
     @Override
     public int getItemCount() {
-        return records.size();
+        return journies.size();
     }
 
     public interface RecyclerViewClickListener

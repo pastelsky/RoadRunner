@@ -19,6 +19,7 @@ import android.widget.Toast;
 import com.example.shubhamkanodia.roadrunner.Adapters.RecordingsAdapter;
 import com.example.shubhamkanodia.roadrunner.Events.UploadChangeEvent;
 import com.example.shubhamkanodia.roadrunner.Helpers.Helper;
+import com.example.shubhamkanodia.roadrunner.Models.Journey;
 import com.example.shubhamkanodia.roadrunner.Models.RecordRow;
 import com.example.shubhamkanodia.roadrunner.Models.RecordingItem;
 import com.example.shubhamkanodia.roadrunner.R;
@@ -38,10 +39,11 @@ public class RecordsFragment extends Fragment {
     RecordingsAdapter.RecyclerViewClickListener itemListener;
     private TextView tvData;
     private Button bshowData;
-    private ListView lvRecords;
-    private ArrayList<RecordingItem> records;
-    private RecyclerView rvRecords;
+    private ListView lvjourneyArrayList;
+    private ArrayList<Journey> journeyArrayList;
+    private RecyclerView rvjourneyArrayList;
     private RecordingsAdapter recordingsAdapter;
+    RealmResults<Journey> journeyRealmResults;
 
 
     public RecordsFragment() {
@@ -64,28 +66,29 @@ public class RecordsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_records, container, false);
         realm = Realm.getInstance(getActivity().getApplicationContext());
 
-
-
+        Toast.makeText(getContext(), " Fragment being called", Toast.LENGTH_SHORT).show();
 
         itemListener = new RecordingsAdapter.RecyclerViewClickListener() {
             @Override
             public void recyclerViewListClicked(View v, int position) {
 
-                if ((!Helper.isOnline(getActivity()) || !Helper.isOnlineOnWifi(getActivity())) && !records.get(position).isSynced()) {
+                if ((!Helper.isOnline(getActivity()) || !Helper.isOnlineOnWifi(getActivity())) && !journeyArrayList.get(position).isSynced()) {
                     Toast.makeText(getContext(), "No WIFI internet connection. Try later", Toast.LENGTH_SHORT).show();
-                } else if (!records.get(position).isSynced()) {
-
-                    Intent serviceIntent = new Intent(getActivity(), UploadService.class);
-                    serviceIntent.putExtra("start_time", records.get(position).start_time);
-                    getActivity().startService(serviceIntent);
-
-                    records.get(position).isSyncing = true;
-                    refreshList(false);
-                } else if (records.get(position).isSynced()) {
-                    RecordingItem toshow = records.get(position);
+                }
+//                else if (!journeyArrayList.get(position).isSynced()) {
+//
+//                    Intent serviceIntent = new Intent(getActivity(), UploadService.class);
+//                    serviceIntent.putExtra("start_time", journeyArrayList.get(position).getStartTime());
+//                    getActivity().startService(serviceIntent);
+//
+//                    journeyArrayList.get(position).setSynced(true);
+//                    refreshList(false);
+//                }
+                else if (journeyArrayList.get(position).isSynced()) {
+                    Journey toshow = journeyArrayList.get(position);
                     Intent intent = new Intent(android.content.Intent.ACTION_VIEW,
-                            Uri.parse("geo:" + toshow.getstart_lat() + "," + toshow.getstart_long()
-                                    + "?q=" + toshow.getend_lat() + "," + toshow.getend_long() + "(name)"));
+                            Uri.parse("geo:" + toshow.getStartLat() + "," + toshow.getStartLong()
+                                    + "?q=" + toshow.getEndLat() + "," + toshow.getEndLong() + "(name)"));
                     intent.setComponent(new ComponentName("com.google.android.apps.maps", "com.google.android.maps.MapsActivity"));
                     startActivity(intent);
 
@@ -97,24 +100,26 @@ public class RecordsFragment extends Fragment {
 
         EventBus.getDefault().register(this);
 
-        rvRecords = (RecyclerView) view.findViewById(R.id.rvRecords);
-        records = new ArrayList<RecordingItem>();
+        rvjourneyArrayList = (RecyclerView) view.findViewById(R.id.rvRecords);
+        journeyArrayList = new ArrayList<Journey>();
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
         layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         layoutManager.getReverseLayout();
-        rvRecords.setLayoutManager(layoutManager);
+        rvjourneyArrayList.setLayoutManager(layoutManager);
 
 
-        recordingsAdapter = new RecordingsAdapter(getContext(), itemListener, records);
-        rvRecords.setAdapter(recordingsAdapter);
+        recordingsAdapter = new RecordingsAdapter(getContext(), itemListener, journeyArrayList);
+        rvjourneyArrayList.setAdapter(recordingsAdapter);
 
-        RealmQuery<RecordRow> query = realm.where(RecordRow.class);
+        journeyRealmResults = realm.where(Journey.class)
+                .equalTo("isSynced", false)
+                .findAll();
 
-        RealmResults<RecordRow> results = query.findAll();
 
-        for (RecordRow record : results) {
-            records.add(records.size(), new RecordingItem(record));
+        for (Journey journey : journeyRealmResults) {
+            journeyArrayList.add(journeyArrayList.size(), journey);
+            Toast.makeText(getContext(), " adding", Toast.LENGTH_SHORT).show();
         }
 
         recordingsAdapter.notifyDataSetChanged();
@@ -123,7 +128,7 @@ public class RecordsFragment extends Fragment {
     }
 
     public void onEvent(UploadChangeEvent event) {
-        rvRecords.invalidate();
+        rvjourneyArrayList.invalidate();
         refreshList(true);
 
     }
@@ -141,15 +146,14 @@ public class RecordsFragment extends Fragment {
 
         if (repopulate) {
 
-            RealmQuery<RecordRow> query = realm.where(RecordRow.class);
+            journeyRealmResults = realm.where(Journey.class)
+                    .findAll();
 
-            RealmResults<RecordRow> results = query.findAll();
-
-            records.clear();
+            journeyArrayList.clear();
 
 
-            for (RecordRow record : results) {
-                records.add(new RecordingItem(record));
+            for (Journey record : journeyRealmResults) {
+                journeyArrayList.add(record);
             }
         }
         recordingsAdapter.notifyDataSetChanged();
