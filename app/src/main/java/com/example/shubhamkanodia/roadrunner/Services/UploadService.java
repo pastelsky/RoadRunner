@@ -60,6 +60,16 @@ public class UploadService extends Service {
                     .equalTo("isSynced", false)
                     .findAll();
 
+            //Adding address and make string times to date times.
+            realm.beginTransaction();
+
+            for (int k = 0; k < journeyRealmResults.size(); k++) {
+                journeyRealmResults.get(k).setStartAddress(Helper.getAddress(this, journeyRealmResults.get(k).getStartLat(), journeyRealmResults.get(k).getStartLong()));
+                journeyRealmResults.get(k).setEndAddress(Helper.getAddress(this, journeyRealmResults.get(k).getEndLat(), journeyRealmResults.get(k).getEndLong()));
+            }
+            realm.commitTransaction();
+
+
             Log.e("journeylist size", "" + journeyRealmResults.size());
 
             final int size = journeyRealmResults.size();
@@ -103,7 +113,7 @@ public class UploadService extends Service {
                                 mNotifyManager.notify(notif_id, mBuilder.build());
 
                             } else {
-                                Log.e("Failure ", "Yeah");
+                                Log.e("Failure ", "Failed to upload to parse");
                             }
                             if (syncedCount == size) {
                                 mBuilder.setOngoing(false);

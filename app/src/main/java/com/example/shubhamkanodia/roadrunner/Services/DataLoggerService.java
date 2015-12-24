@@ -56,6 +56,8 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.common.base.Predicates;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Timer;
@@ -350,9 +352,10 @@ public class DataLoggerService extends Service implements SensorEventListener, G
 //            } else if (Constants.REQUIRE_MOVEMENT && initLocation.distanceTo(currentLocation) < Constants.MINIMUM_REQD_DISPLACEMENT) {
 //                Toast.makeText(this, "Did not detect any geographical movement.", Toast.LENGTH_SHORT).show();
 //            } else {
+            DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
 
             Journey newJourney = new Journey(initLocation.getLatitude(), currentLocation.getLatitude(), initLocation.getLongitude(), currentLocation.getLongitude(),
-                    startTime, endTime, HARDCODED_EMAIL);
+                    df.format(startTime), df.format(endTime), HARDCODED_EMAIL);
 
             realm.beginTransaction();
             newJourney.setroadIrregularityRealmList(roadIrregularityRealmList);
@@ -487,7 +490,7 @@ public class DataLoggerService extends Service implements SensorEventListener, G
 
     private void playSound(int intensity) {
         int sounds[] = {soundLow, soundmedium, soundHigh, soundVeryHigh, soundExtreme};
-        ourSounds.play(sounds[intensity-1], 0.9f, 0.9f, 1, 0, 1);
+        ourSounds.play(sounds[intensity - 1], 0.9f, 0.9f, 1, 0, 1);
     }
 
 
