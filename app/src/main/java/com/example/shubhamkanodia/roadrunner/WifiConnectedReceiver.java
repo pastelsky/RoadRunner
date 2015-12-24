@@ -28,7 +28,7 @@ public class WifiConnectedReceiver extends BroadcastReceiver {
             Intent uploadIntent = new Intent(context, UploadService.class);
 
             context.startService(uploadIntent);
-            Toast.makeText(context, "Sycing with our servers :)", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "Syncing with our servers :)", Toast.LENGTH_SHORT).show();
 
 //            realm = Realm.getInstance(context);
 

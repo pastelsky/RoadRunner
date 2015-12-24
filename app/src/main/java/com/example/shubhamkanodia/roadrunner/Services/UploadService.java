@@ -7,6 +7,7 @@ import android.os.IBinder;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
+import com.example.shubhamkanodia.roadrunner.Helpers.Helper;
 import com.example.shubhamkanodia.roadrunner.Models.Journey;
 import com.example.shubhamkanodia.roadrunner.Models.RoadIrregularity;
 import com.example.shubhamkanodia.roadrunner.R;
@@ -35,6 +36,7 @@ public class UploadService extends Service {
     NotificationManager mNotifyManager;
     NotificationCompat.Builder mBuilder;
     int notif_id = 4;
+    RealmResults<Journey> journeyRealmResults;
 
 
     public UploadService() {
@@ -49,71 +51,78 @@ public class UploadService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        realm = Realm.getInstance(this);
+        if (Helper.isOnlineOnWifi(getApplicationContext())) {
+
+            realm = Realm.getInstance(this);
 
 
-        final RealmResults<Journey> journeyRealmResults = realm.where(Journey.class)
-                .equalTo("isSynced", false)
-                .findAll();
+            journeyRealmResults = realm.where(Journey.class)
+                    .equalTo("isSynced", false)
+                    .findAll();
 
-        Log.e("journeylist size", "" + journeyRealmResults.size());
+            Log.e("journeylist size", "" + journeyRealmResults.size());
 
+            final int size = journeyRealmResults.size();
 
-        if (journeyRealmResults.size() > 0) {
+            if (journeyRealmResults.size() > 0) {
 
-            mNotifyManager =
-                    (NotificationManager) getSystemService(this.NOTIFICATION_SERVICE);
-            mBuilder = new NotificationCompat.Builder(this);
-            mBuilder.setContentTitle("Uploading data...")
-                    .setSmallIcon(R.drawable.ic_upload)
-                    .setProgress(journeyRealmResults.size(), 0, false);
+                mNotifyManager =
+                        (NotificationManager) getSystemService(this.NOTIFICATION_SERVICE);
+                mBuilder = new NotificationCompat.Builder(this);
+                mBuilder.setContentTitle("Uploading data..." + size + " Journies")
+                        .setSmallIcon(R.drawable.ic_upload)
+                        .setProgress(journeyRealmResults.size(), 0, false)
+                        .setOngoing(true);
 
-            startForeground(notif_id,
-                    mBuilder.build());
+                startForeground(notif_id,
+                        mBuilder.build());
 
-            //Save each irregularity and journey to parse
-            for (final Journey j : journeyRealmResults) {
-                ParseObject p = Journey.convertToParseObject(j);
+                //Save each irregularity and journey to parse
+                for (final Journey j : journeyRealmResults) {
+                    ParseObject p = Journey.convertToParseObject(j);
 
-                List<ParseObject> irregularityList = new ArrayList<>();
+                    List<ParseObject> irregularityList = new ArrayList<>();
 
-                for (RoadIrregularity r : j.getroadIrregularityRealmList()) {
-                    ParseObject pr = RoadIrregularity.convertToParseObject(r);
-                    pr.saveInBackground();
-                    irregularityList.add(pr);
-                }
-                p.addAll("irregularityList", irregularityList);
-
-                p.saveInBackground(new SaveCallback() {
-                    @Override
-                    public void done(ParseException e) {
-                        if (e == null) {
-                            Log.e("Success ", "Added to parse");
-                            realm.beginTransaction();
-                            j.setSynced(true);
-                            realm.commitTransaction();
-
-                            mBuilder.setProgress(journeyRealmResults.size(), syncedCount, false);
-                            mNotifyManager.notify(notif_id, mBuilder.build());
-
-                        } else {
-                            Log.e("Failure ", "Yeah");
-                        }
-                        if (++syncedCount == journeyRealmResults.size()) {
-                            stopForeground(true);
-                            Log.e("NOTIFICATION:", "CANCELLING");
-                        }
+                    for (RoadIrregularity r : j.getroadIrregularityRealmList()) {
+                        ParseObject pr = RoadIrregularity.convertToParseObject(r);
+                        pr.saveInBackground();
+                        irregularityList.add(pr);
                     }
-                });
+                    p.addAll("irregularityList", irregularityList);
+
+                    p.saveInBackground(new SaveCallback() {
+                        @Override
+                        public void done(ParseException e) {
+                            if (e == null) {
+                                Log.e("Success ", "Added to parse");
+                                realm.beginTransaction();
+                                j.setSynced(true);
+                                realm.commitTransaction();
+                                syncedCount++;
+                                mBuilder.setProgress(journeyRealmResults.size(), syncedCount, false);
+                                mNotifyManager.notify(notif_id, mBuilder.build());
+
+                            } else {
+                                Log.e("Failure ", "Yeah");
+                            }
+                            if (syncedCount == size) {
+                                mBuilder.setOngoing(false);
+                                stopForeground(true);
+                                Log.e("NOTIFICATION:", "CANCELLING");
+                                syncedCount = 0;
+                            }
+                        }
+                    });
 
 
+                }
             }
+
+
+            //For each journey, get all road irregularties bounded by start and end time
         }
 
-
-        //For each journey, get all road irregularties bounded by start and end time
-
-
         return START_STICKY;
+
     }
 }

@@ -21,6 +21,8 @@ import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.AudioAttributes;
+import android.media.SoundPool;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
@@ -78,6 +80,14 @@ public class DataLoggerService extends Service implements SensorEventListener {
     Location initLocation;
     Location currentLocation;
     Location checkLocation;
+    SoundPool ourSounds;
+
+    int soundLow;
+    int soundmedium;
+    int soundHigh;
+    int soundVeryHigh;
+    int soundExtreme;
+
 
     boolean isGPSConnected = false;
     long lastUpdate = 0;
@@ -104,6 +114,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         initService();
+//        initSounds();
         roadIrregularityRealmList = new RealmList<>();
 
         if (wasStartedSuccessfully)
@@ -203,6 +214,22 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
         return START_STICKY;
     }
+//    private void initSounds() {
+//
+//        AudioAttributes audioAttributes = new AudioAttributes.Builder()
+//                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+//                .setUsage(AudioAttributes.USAGE_GAME)
+//                .build();
+//        ourSounds = new SoundPool.Builder()
+//                .setMaxStreams(15)
+//                .setAudioAttributes(audioAttributes)
+//                .build();
+//        soundLow = ourSounds.load(this, R.raw.low, 1);
+//        soundmedium = ourSounds.load(this, R.raw.medium, 1);
+//        soundHigh = ourSounds.load(this, R.raw.high, 1);
+//        soundVeryHigh = ourSounds.load(this, R.raw.veryhigh, 1);
+//        soundExtreme = ourSounds.load(this, R.raw.extreme, 1);
+//    }
 
 
     private void startListeningForNoMovement() {
@@ -431,6 +458,8 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
                         realm.commitTransaction();
                         roadIrregularityRealmList.add(roadIrregularity);
+                        playSound(intensity);
+
 
                     }
 
@@ -442,6 +471,11 @@ public class DataLoggerService extends Service implements SensorEventListener {
             }
         }
 
+    }
+
+    private void playSound(int intensity) {
+        int sounds[] = {soundLow, soundmedium, soundHigh, soundVeryHigh, soundExtreme};
+        ourSounds.play(sounds[intensity-1], 0.9f, 0.9f, 1, 0, 1);
     }
 
 }
