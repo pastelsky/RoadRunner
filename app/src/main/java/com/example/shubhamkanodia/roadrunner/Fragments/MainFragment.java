@@ -37,7 +37,6 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.google.common.eventbus.EventBus;
 
 import org.achartengine.ChartFactory;
 import org.achartengine.GraphicalView;
@@ -49,6 +48,7 @@ import org.achartengine.renderer.XYSeriesRenderer;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import de.greenrobot.event.EventBus;
 import uk.co.deanwild.materialshowcaseview.MaterialShowcaseView;
 
 // In this case, the fragment displays simple text based on the page
@@ -84,14 +84,20 @@ public class MainFragment extends Fragment implements SensorEventListener,
         super.onCreate(savedInstanceState);
     }
 
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        EventBus.getDefault().register(this);
+    }
+
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_main, container, false);
 
         ButterKnife.bind(this, view);
-        EventBus eventbus = new EventBus();
-        eventbus.register(this);
 
 
         bRecord = (Button) view.findViewById(R.id.bRecord);
@@ -164,7 +170,7 @@ public class MainFragment extends Fragment implements SensorEventListener,
     public void onStop() {
         super.onStop();
         senSensorManager.unregisterListener(this);
-
+        EventBus.getDefault().unregister(this);
     }
 
     @Override

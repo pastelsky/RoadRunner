@@ -24,6 +24,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
+import android.speech.tts.TextToSpeech;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -48,6 +49,7 @@ import com.google.common.base.Predicates;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Callable;
@@ -95,6 +97,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
     RealmList<RoadIrregularity> roadIrregularityRealmList;
 
     Timer noMovementTimer;
+    TextToSpeech mTts;
 
 
     @Override
@@ -105,6 +108,10 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
         if (wasStartedSuccessfully)
             destroyService();
+        else {
+            Toast.makeText(this, "Recording data in background. Stop recording from notification bar when done.", Toast.LENGTH_LONG).show();
+
+        }
 
 
         if (!Helper.isGPSEnabled(this)) {
@@ -114,8 +121,6 @@ public class DataLoggerService extends Service implements SensorEventListener {
             stopSelf();
         } else {
             wasStartedSuccessfully = true;
-            Toast.makeText(this, "Recording data in background. Stop recording from notification bar when done.", Toast.LENGTH_LONG).show();
-
         }
 
 
@@ -266,8 +271,8 @@ public class DataLoggerService extends Service implements SensorEventListener {
             retryer.call(callable);
         } catch (RetryException e) {
             e.printStackTrace();
-//            Toast.makeText(DataLoggerService.this, "Retries failed. Shutting down service.", Toast.LENGTH_SHORT).show();
             Log.e("RETRY", "All attempts to retry failed.");
+            destroyService();
         } catch (ExecutionException e) {
             e.printStackTrace();
         }
@@ -375,6 +380,18 @@ public class DataLoggerService extends Service implements SensorEventListener {
         slidingWindow = new ArrayList<Double>();
 
         updateWidgetStatus(true);
+        mTts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int i) {
+                mTts.setLanguage(Locale.US);
+
+            }
+        });
+
+        String myText1 = "Did you sleep well?";
+        String myText2 = "I hope so, because it's time to wake up.";
+        mTts.speak(myText1, TextToSpeech.QUEUE_FLUSH, null);
+        mTts.speak(myText2, TextToSpeech.QUEUE_ADD, null);
 
     }
 
