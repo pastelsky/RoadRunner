@@ -45,6 +45,8 @@ import org.achartengine.model.XYSeries;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
 
+import java.util.Date;
+
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -176,6 +178,9 @@ public class MainFragment extends Fragment implements SensorEventListener,
     @Override
     public void onResume() {
         super.onResume();
+        if (!getUserVisibleHint()) {
+            return;
+        }
         if (!DataLoggerService.isRunning) {
             if (DataLoggerService.wasStartedSuccessfully)
                 setStartUI();
@@ -185,6 +190,15 @@ public class MainFragment extends Fragment implements SensorEventListener,
 
 
         senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+
+        if (DataLoggerService.wasStartedSuccessfully) {
+            setStartUI();
+            long elapsed = new Date().getTime() - DataLoggerService.startTime.getTime();
+            setTimer(elapsed, true);
+        } else {
+            setTimer(0, false);
+            setEndUI();
+        }
 
     }
 
@@ -215,6 +229,14 @@ public class MainFragment extends Fragment implements SensorEventListener,
         }
     }
 
+    @Override
+    public void setUserVisibleHint(boolean visible) {
+        super.setUserVisibleHint(visible);
+        if (visible && isResumed()) {
+            onResume();
+        }
+    }
+
     public void setStartUI() {
 
         bRecord.setBackgroundColor(Color.RED);
@@ -224,6 +246,15 @@ public class MainFragment extends Fragment implements SensorEventListener,
         chronometer.setBase(SystemClock.elapsedRealtime());
         chronometer.start();
 
+
+    }
+
+    public void setTimer(long elapsedTime, boolean startClock) {
+        chronometer.stop();
+        chronometer.setBase(SystemClock.elapsedRealtime() - elapsedTime);
+
+        if (startClock)
+            chronometer.start();
 
     }
 

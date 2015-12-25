@@ -26,7 +26,6 @@ import android.media.SoundPool;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
-import android.speech.tts.TextToSpeech;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
@@ -38,7 +37,6 @@ import com.example.shubhamkanodia.roadrunner.Activities.GPSPermissionDialog;
 import com.example.shubhamkanodia.roadrunner.Activities.MainActivity;
 import com.example.shubhamkanodia.roadrunner.Activities.RunnerWidget;
 import com.example.shubhamkanodia.roadrunner.Events.ServiceStopEvent;
-import com.example.shubhamkanodia.roadrunner.Fragments.MainFragment;
 import com.example.shubhamkanodia.roadrunner.Helpers.Constants;
 import com.example.shubhamkanodia.roadrunner.Helpers.Helper;
 import com.example.shubhamkanodia.roadrunner.Helpers.XYZProcessor;
@@ -56,7 +54,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Callable;
@@ -76,13 +73,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
     public static boolean wasStartedSuccessfully = false;
     public static boolean isRunning = false;
-
-    protected BroadcastReceiver stopServiceReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            destroyService();
-        }
-    };
+    public static Date startTime;
     String HARDCODED_EMAIL = "abc@example.com";
     Location initLocation;
     Location currentLocation;
@@ -96,23 +87,24 @@ public class DataLoggerService extends Service implements SensorEventListener {
     int soundExtreme;
     int soundServiceStarted;
     int soundServiceTerminated;
-
-    boolean isGPSConnected = true;
+    protected BroadcastReceiver stopServiceReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            destroyService();
+        }
+    };
 
     // Testing
     //    boolean isGPSConnected = false;
-
+    boolean isGPSConnected = true;
     long lastUpdate = 0;
     LocationManager mlocManager;
     LocationListener locationListener;
     SensorManager senSensorManager;
     Sensor senAccelerometer;
-
+    GpsStatus.Listener gpsListener;
     Vibrator vibrator;
-
     ArrayList<Double> slidingWindow;
-
-    Date startTime;
     boolean requireMovement;
     Realm realm;
     RealmList<RoadIrregularity> roadIrregularityRealmList;
@@ -216,14 +208,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
         senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
 
-        mlocManager.addGpsStatusListener(new android.location.GpsStatus.Listener() {
-            public void onGpsStatusChanged(int event) {
-
-                if (event == GpsStatus.GPS_EVENT_STOPPED) {
-                    destroyService();
-                }
-            }
-        });
+        mlocManager.addGpsStatusListener(gpsListener);
 
         Log.e("MAX_ACCL_RANGE", "RANGE: " + senAccelerometer.getMaximumRange() + "\nResolution: " + senAccelerometer.getResolution() + "\nDelays: " + senAccelerometer.getMinDelay() + " - " + senAccelerometer.getMinDelay());
 
@@ -352,7 +337,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
             if (totalJourneyTime < Constants.MINIMUM_RECORD_TIME) {
                 Toast.makeText(this, "Data set too small. Try recording for a longer time!", Toast.LENGTH_SHORT).show();
-            } else if (Constants.REQUIRE_MOVEMENT && initLocation.distanceTo(currentLocation) < Constants.MINIMUM_REQD_DISPLACEMENT) {
+            } else if (Constants.REQUIRE_MOVEMENT && (isGPSConnected && initLocation.distanceTo(currentLocation) < Constants.MINIMUM_REQD_DISPLACEMENT)) {
                 Toast.makeText(this, "Did not detect any geographical movement.", Toast.LENGTH_SHORT).show();
             } else {
 
@@ -406,8 +391,8 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
         }
 
-
         mlocManager.removeUpdates(locationListener);
+        mlocManager.removeGpsStatusListener(gpsListener);
         senSensorManager.unregisterListener(this);
         if (noMovementTimer != null)
             noMovementTimer.cancel();
@@ -430,6 +415,15 @@ public class DataLoggerService extends Service implements SensorEventListener {
         Location location = mlocManager
                 .getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         currentLocation = checkLocation = initLocation = location;
+
+        gpsListener = new android.location.GpsStatus.Listener() {
+            public void onGpsStatusChanged(int event) {
+
+                if (event == GpsStatus.GPS_EVENT_STOPPED) {
+                    destroyService();
+                }
+            }
+        };
 
         realm = Realm.getInstance(this);
 
