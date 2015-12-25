@@ -33,6 +33,15 @@ public class Helper {
         return (activeNetworkInfo != null && activeNetworkInfo.isConnected());
     }
 
+    public static boolean isOnlineOnMobile(Context context) {
+        ConnectivityManager cm =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        return (activeNetwork != null &&
+                activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE);
+    }
+
     public static boolean isOnlineOnWifi(Context c) {
         ConnectivityManager cm = (ConnectivityManager) c.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo network = cm.getActiveNetworkInfo();

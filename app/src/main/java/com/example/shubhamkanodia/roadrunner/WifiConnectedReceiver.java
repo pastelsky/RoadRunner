@@ -24,7 +24,7 @@ public class WifiConnectedReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        if (Helper.isOnlineOnWifi(context)) {
+        if (Helper.isOnlineOnWifi(context) || Helper.isOnlineOnMobile(context)) {
             Intent uploadIntent = new Intent(context, UploadService.class);
 
             context.startService(uploadIntent);
