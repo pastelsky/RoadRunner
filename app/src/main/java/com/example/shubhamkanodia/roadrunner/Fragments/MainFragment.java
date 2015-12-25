@@ -181,13 +181,6 @@ public class MainFragment extends Fragment implements SensorEventListener,
         if (!getUserVisibleHint()) {
             return;
         }
-        if (!DataLoggerService.isRunning) {
-            if (DataLoggerService.wasStartedSuccessfully)
-                setStartUI();
-            else
-                setEndUI();
-        }
-
 
         senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
 
