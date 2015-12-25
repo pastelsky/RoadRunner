@@ -89,8 +89,14 @@ public class RecordsFragment extends Fragment {
                     Intent intent = new Intent(android.content.Intent.ACTION_VIEW,
                             Uri.parse("geo:" + toshow.getStartLat() + "," + toshow.getStartLong()
                                     + "?q=" + toshow.getEndLat() + "," + toshow.getEndLong() + "(name)"));
-                    intent.setComponent(new ComponentName("com.google.android.apps.maps", "com.google.android.maps.MapsActivity"));
-                    startActivity(intent);
+                    if (intent.resolveActivity(getActivity().getPackageManager()) != null) {
+                        intent.setComponent(new ComponentName("com.google.android.apps.maps", "com.google.android.maps.MapsActivity"));
+                        startActivity(intent);
+                    }
+                    else{
+                        Toast.makeText(getContext(), "Google Maps is not installed on the device", Toast.LENGTH_SHORT).show();
+                    }
+
 
                 }
 
