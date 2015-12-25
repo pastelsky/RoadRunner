@@ -1,25 +1,20 @@
-package com.example.shubhamkanodia.roadrunner;
+package com.example.shubhamkanodia.roadrunner.BroadcastRecievers;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.example.shubhamkanodia.roadrunner.Helpers.Helper;
-import com.example.shubhamkanodia.roadrunner.Models.Journey;
 import com.example.shubhamkanodia.roadrunner.Services.UploadService;
-import com.parse.ParseObject;
 
 import io.realm.Realm;
-import io.realm.RealmQuery;
-import io.realm.RealmResults;
 
 public class WifiConnectedReceiver extends BroadcastReceiver {
+    Realm realm;
+
     public WifiConnectedReceiver() {
     }
-
-    Realm realm;
 
     @Override
     public void onReceive(Context context, Intent intent) {

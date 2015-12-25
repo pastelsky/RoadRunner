@@ -1,6 +1,7 @@
 package com.example.shubhamkanodia.roadrunner.Activities;
 
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,23 +9,34 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
 
+import com.example.shubhamkanodia.roadrunner.ActivityRecognition.ActivityRecognitionIntentService;
 import com.example.shubhamkanodia.roadrunner.Adapters.SampleFragmentPagerAdapter;
 import com.example.shubhamkanodia.roadrunner.Fragments.MainFragment;
+import com.example.shubhamkanodia.roadrunner.Helpers.Constants;
 import com.example.shubhamkanodia.roadrunner.Helpers.Helper;
 import com.example.shubhamkanodia.roadrunner.R;
 import com.example.shubhamkanodia.roadrunner.Services.UploadService;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.ActivityRecognition;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, ResultCallback<Status> {
 
     private static final int REQUEST_CHECK_SETTINGS = 3;
+    protected GoogleApiClient mGoogleApiClient;
     int activeTab;
     ViewPager viewPager;
     SampleFragmentPagerAdapter sampleFragmentPagerAdapter;
+    String TAG = "Main Activity";
+
 
 
     @Override
@@ -42,7 +54,90 @@ public class MainActivity extends AppCompatActivity {
         TabLayout tabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
         tabLayout.setupWithViewPager(viewPager);
 
+        buildGoogleApiClient();
+
     }
+
+    protected synchronized void buildGoogleApiClient() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(ActivityRecognition.API)
+                .build();
+    }
+
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mGoogleApiClient.disconnect();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    public void onConnected(Bundle connectionHint) {
+        Log.e("MAIN:", "google cliend conn");
+        requestActivityUpdates();
+        Log.e(TAG, "onConnected: ");
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult result) {
+        Log.e(TAG, "onConnectionFailed: ");
+    }
+
+    @Override
+    public void onConnectionSuspended(int cause) {
+        Log.e(TAG, "onConnectionSuspended: ");
+        mGoogleApiClient.connect();
+    }
+
+    public void onResult(Status status) {
+        if (status.isSuccess()) {
+            Log.e("ActivityDetction", "Added acitivity detenction: " + status.getStatusMessage());
+
+        } else {
+            Log.e("ActivityDetction", "Error adding or removing activity detection: " + status.getStatusMessage());
+        }
+    }
+
+
+    public void requestActivityUpdates() {
+        if (!mGoogleApiClient.isConnected()) {
+            return;
+        }
+
+        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
+                mGoogleApiClient,
+                Constants.ACTIVITY_DETECTION_INTERVAL * 1000,
+                getActivityDetectionPendingIntent()
+        ).setResultCallback(this);
+    }
+
+    /**
+     * Gets a PendingIntent to be sent for each activity detection.
+     */
+    private PendingIntent getActivityDetectionPendingIntent() {
+        Intent intent = new Intent(this, ActivityRecognitionIntentService.class);
+        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+
 
     public void changeFragment() {
         viewPager.setCurrentItem(1, true);

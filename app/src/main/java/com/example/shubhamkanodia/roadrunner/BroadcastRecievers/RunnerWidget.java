@@ -1,4 +1,4 @@
-package com.example.shubhamkanodia.roadrunner.Activities;
+package com.example.shubhamkanodia.roadrunner.BroadcastRecievers;
 
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;

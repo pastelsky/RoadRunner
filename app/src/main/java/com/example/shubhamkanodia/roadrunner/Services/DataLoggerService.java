@@ -35,7 +35,7 @@ import android.widget.Toast;
 
 import com.example.shubhamkanodia.roadrunner.Activities.GPSPermissionDialog;
 import com.example.shubhamkanodia.roadrunner.Activities.MainActivity;
-import com.example.shubhamkanodia.roadrunner.Activities.RunnerWidget;
+import com.example.shubhamkanodia.roadrunner.BroadcastRecievers.RunnerWidget;
 import com.example.shubhamkanodia.roadrunner.Events.ServiceStopEvent;
 import com.example.shubhamkanodia.roadrunner.Helpers.Constants;
 import com.example.shubhamkanodia.roadrunner.Helpers.Helper;
@@ -94,15 +94,16 @@ public class DataLoggerService extends Service implements SensorEventListener {
         }
     };
 
-    // Testing
-    //    boolean isGPSConnected = false;
-    boolean isGPSConnected = true;
+    boolean isGPSConnected = false;
+    //    boolean isGPSConnected = true;
     long lastUpdate = 0;
     LocationManager mlocManager;
     LocationListener locationListener;
     SensorManager senSensorManager;
     Sensor senAccelerometer;
-    GpsStatus.Listener gpsListener;
+    GpsStatus.Listener gpsOffListener;
+    GpsStatus.Listener gpsOnListener;
+
     Vibrator vibrator;
     ArrayList<Double> slidingWindow;
     boolean requireMovement;
@@ -118,12 +119,10 @@ public class DataLoggerService extends Service implements SensorEventListener {
         initService();
         initSounds();
 
-        roadIrregularityRealmList = new RealmList<>();
 
         if (wasStartedSuccessfully)
             destroyService();
         else {
-            Toast.makeText(this, "Recording data in background. Stop recording from notification bar when done.", Toast.LENGTH_LONG).show();
             //Not sure why this sound doesnt play.
             ourSounds.play(soundServiceStarted, 0.9f, 0.9f, 1, 0, 1);
 
@@ -131,14 +130,31 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
 
         if (!Helper.isGPSEnabled(this)) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            }
+            mlocManager.addGpsStatusListener(gpsOnListener);
+
             Intent m = new Intent(this, GPSPermissionDialog.class);
             m.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
             startActivity(m);
+
             stopSelf();
+
         } else {
-            wasStartedSuccessfully = true;
-            isRunning = true;
+            startRecordingData();
+
         }
+
+
+        return START_STICKY;
+    }
+
+    private void startRecordingData() {
+        wasStartedSuccessfully = true;
+        isRunning = true;
+
+        Toast.makeText(this, "Recording data in background. Stop recording from notification bar when done.", Toast.LENGTH_LONG).show();
 
 
         PendingIntent contentIntent = PendingIntent.getBroadcast(this, 0, new Intent("myFilter"), PendingIntent.FLAG_CANCEL_CURRENT);
@@ -206,13 +222,12 @@ public class DataLoggerService extends Service implements SensorEventListener {
 
         mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10, 0, locationListener);
 
-        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
 
-        mlocManager.addGpsStatusListener(gpsListener);
+        mlocManager.addGpsStatusListener(gpsOffListener);
 
         Log.e("MAX_ACCL_RANGE", "RANGE: " + senAccelerometer.getMaximumRange() + "\nResolution: " + senAccelerometer.getResolution() + "\nDelays: " + senAccelerometer.getMinDelay() + " - " + senAccelerometer.getMinDelay());
 
-        return START_STICKY;
     }
 
 
@@ -283,7 +298,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
                     return null;
                 else {
                     mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10, 0, locationListener);
-                    senSensorManager.registerListener(DataLoggerService.this, senAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+                    senSensorManager.registerListener(DataLoggerService.this, senAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
 
                     startListeningForNoMovement();
                     return true;
@@ -392,7 +407,7 @@ public class DataLoggerService extends Service implements SensorEventListener {
         }
 
         mlocManager.removeUpdates(locationListener);
-        mlocManager.removeGpsStatusListener(gpsListener);
+        mlocManager.removeGpsStatusListener(gpsOffListener);
         senSensorManager.unregisterListener(this);
         if (noMovementTimer != null)
             noMovementTimer.cancel();
@@ -402,21 +417,15 @@ public class DataLoggerService extends Service implements SensorEventListener {
     public void initService() {
         mlocManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
+
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+
         }
         Location location = mlocManager
                 .getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         currentLocation = checkLocation = initLocation = location;
 
-        gpsListener = new android.location.GpsStatus.Listener() {
+        gpsOffListener = new android.location.GpsStatus.Listener() {
             public void onGpsStatusChanged(int event) {
 
                 if (event == GpsStatus.GPS_EVENT_STOPPED) {
@@ -425,7 +434,18 @@ public class DataLoggerService extends Service implements SensorEventListener {
             }
         };
 
+        gpsOnListener = new GpsStatus.Listener() {
+            @Override
+            public void onGpsStatusChanged(int event) {
+                if (event == GpsStatus.GPS_EVENT_STARTED) {
+                    startRecordingData();
+                    mlocManager.removeGpsStatusListener(gpsOnListener);
+                }
+            }
+        };
+
         realm = Realm.getInstance(this);
+        roadIrregularityRealmList = new RealmList<>();
 
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);

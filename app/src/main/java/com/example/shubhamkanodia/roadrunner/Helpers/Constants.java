@@ -8,6 +8,7 @@ public class Constants {
     public static final String PACKAGE_NAME = "com.example.shubhamkanodia.roadrunner"; // Change as appropriate
     public static final String STRING_ACTION = PACKAGE_NAME + ".STRING_ACTION";
     public static final String STRING_EXTRA = PACKAGE_NAME + ".STRING_EXTRA";
+    public static final String BROADCAST_ACTION = PACKAGE_NAME + ".BROADCAST_ACTION";
 
     //All time constants are in seconds. All distance constants in meters.
 
@@ -40,4 +41,10 @@ public class Constants {
     public static final int RETRY_MULTIPLIER = 100;
     public static final int MAX_RETRY_TIME = 60;
     public static final boolean MOCK_ALLOWED = true;
+
+
+    public static final int ACTIVITY_DETECTION_INTERVAL = 60;
+
+    public static final int CONNECTION_FAILURE_RESOLUTION_REQUEST = 900;
+
 }
